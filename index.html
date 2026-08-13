@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="세종 3B">
+<meta name="theme-color" content="#F4F2EC">
+<title>세종한국어 3B · HanaAI</title>
+<style>
+:root{
+  --bg:#F4F2EC; --card:#FDFCF9; --ink:#26241E; --muted:#7B766B;
+  --line:#E7E2D6; --soft:#EFEBE0; --accent:#C15F3C; --accent-soft:#F3E4DC;
+  --green:#5E7A55; --olive:#8A9660; --amber:#C6A15B; --terra:#C07A4D; --gray:#A9A395;
+  --red:#B4543A;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;touch-action:manipulation;overscroll-behavior-y:none}
+#app{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px)}
+h1,h2,.serif{font-family:ui-serif,Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+.pagehead{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.pagehead h1{font-size:24px;flex:1}
+.sub{color:var(--muted);font-size:14px}
+.backbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:20px;color:var(--ink);display:flex;align-items:center;justify-content:center;flex:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.sec{font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:18px 2px 8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;font-weight:600;width:100%;cursor:pointer;font-family:inherit}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ghost{background:var(--soft)}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{display:inline-block;background:var(--soft);border-radius:999px;padding:5px 12px;font-size:13.5px;margin:0 6px 6px 0;color:#4d493f}
+.bar{height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--olive);border-radius:3px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+/* vocab rows */
+.vrow{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.vrow:last-child{border-bottom:none}
+.vmain{flex:1;min-width:0}
+.vko{font-weight:600}
+.vvi{color:var(--muted);font-size:14px;display:none;margin-top:2px}
+.vrow.open .vvi{display:block}
+.hint{font-size:12.5px;color:var(--muted);margin:4px 2px 8px}
+.spk{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--soft);font-size:15px;flex:none;display:flex;align-items:center;justify-content:center}
+/* lesson list */
+.lrow{display:flex;align-items:center;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.lrow:last-child{border-bottom:none}
+.lnum{width:38px;height:38px;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#5a5548;flex:none}
+.ltit{font-weight:600;font-size:15px}
+.lsub{font-size:13px;color:var(--muted)}
+.lbar{width:52px;flex:none}
+/* grammar */
+.gform{font-family:ui-serif,Georgia,serif;font-size:20px;font-weight:700}
+.gex{background:var(--soft);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:15px}
+.gex .vi{color:var(--muted);font-size:13.5px;margin-top:2px}
+.gnote{font-size:13.5px;color:#6b5d4f;background:var(--accent-soft);border-radius:10px;padding:8px 12px;margin-top:10px}
+.acc{cursor:pointer}
+.accbody{display:none;margin-top:10px}
+.acc.open .accbody{display:block}
+.chev{color:var(--muted);transition:transform .2s}
+.acc.open .chev{transform:rotate(90deg)}
+/* flashcards */
+.fcwrap{perspective:1200px;margin:6px 0 14px}
+.fc{position:relative;height:330px;transform-style:preserve-3d;transition:transform .45s;cursor:pointer}
+.fc.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.face.back{transform:rotateY(180deg)}
+.fcbig{font-family:ui-serif,Georgia,serif;font-size:30px;font-weight:700;line-height:1.35}
+.fcsmall{font-size:20px;font-weight:600;line-height:1.4}
+.tag{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gbtn{border:1px solid var(--line);background:var(--card);border-radius:13px;padding:10px 4px;font-family:inherit;cursor:pointer}
+.gbtn b{display:block;font-size:14.5px}
+.gbtn span{font-size:11.5px;color:var(--muted)}
+.gbtn:active{transform:scale(.97)}
+.g0{border-color:#d9b3a6}.g3{border-color:#c9d0b8}
+/* quiz */
+.opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:13px;padding:13px 14px;font-size:16px;margin-bottom:9px;font-family:inherit;cursor:pointer}
+.opt.ok{border-color:var(--green);background:#EDF1E6}
+.opt.no{border-color:var(--red);background:#F6E7E1}
+.opt[disabled]{opacity:.55}
+.opt.ok[disabled],.opt.no[disabled]{opacity:1}
+.expl{background:var(--soft);border-radius:12px;padding:11px 13px;font-size:14.5px;margin:4px 0 12px}
+/* tabbar */
+#tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:rgba(250,249,244,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 10px calc(env(safe-area-inset-bottom) + 6px);z-index:50}
+#tabbar .inner{display:flex;width:100%;max-width:560px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 3px;color:var(--muted);font-size:11px;border:none;background:none;font-family:inherit;cursor:pointer}
+.tab svg{width:23px;height:23px}
+.tab.on{color:var(--accent);font-weight:600}
+/* misc */
+.stat{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:14.5px}
+.stat:last-child{border:none}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);color:#5a5548}
+.overlay{position:fixed;inset:0;background:rgba(38,36,30,.4);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:82vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom)+24px)}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line);font-size:14.5px}
+.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)}
+.bigxp{font-family:ui-serif,Georgia,serif;font-size:44px;font-weight:700;text-align:center;margin:10px 0 2px}
+.center{text-align:center}
+.mt{margin-top:12px}
+.warn{font-size:13px;color:var(--muted);font-style:italic}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="tabbar"><div class="inner">
+<button class="tab" id="tb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5.5 9.5V20h13V9.5"/></svg>홈</button>
+<button class="tab" id="tb-lessons" onclick="setTab('lessons')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6C10 4.7 7.2 4 4 4v14c3.2 0 6 .7 8 2 2-1.3 4.8-2 8-2V4c-3.2 0-6 .7-8 2zM12 6v14"/></svg>학습</button>
+<button class="tab" id="tb-practice" onclick="setTab('practice')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7.5" y="3" width="13" height="16.5" rx="2.5"/><path d="M7.5 7H5.7A2.7 2.7 0 0 0 3 9.7v8.6A2.7 2.7 0 0 0 5.7 21h9.6"/></svg>연습</button>
+<button class="tab" id="tb-grammar" onclick="setTab('grammar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M8 9h8M8 12.2h5M8.5 17l-3 3.2V17"/></svg>문법</button>
+</div></nav>
+
+<script>
+/* ================= CURRICULUM DATA ================= */
+const THEMES=[["특별한 나의 경험","Trải nghiệm đặc biệt của tôi"],["음식과 요리","Ẩm thực & nấu ăn"],["실수와 잘못","Sai sót & lỗi lầm"],["멋진 휴가","Kỳ nghỉ tuyệt vời"],["한국에서의 특별한 날","Ngày đặc biệt ở Hàn Quốc"],["나의 진로","Con đường tương lai"]];
+
+const LS=[
+{n:1,th:0,t:"할아버지, 할머니 이야기도 들어 드렸어요",tv:"Tôi còn lắng nghe cả những câu chuyện của ông bà",tp:"방학 활동과 봉사 활동",tpv:"Hoạt động kỳ nghỉ & tình nguyện",
+goals:["Nói về hoạt động trong kỳ nghỉ","Kể lại trải nghiệm tình nguyện","Nói về hoạt động phát triển bản thân","Diễn đạt việc làm gì đó cho người lớn tuổi"],
+c:[["봉사 활동을 하다","làm hoạt động tình nguyện"],["배낭여행을 가다","đi du lịch bụi"],["어학연수를 하다","tham gia khóa học ngôn ngữ ở nước ngoài"],["아르바이트를 하다","làm công việc bán thời gian"],["외국어 시험을 준비하다","chuẩn bị kỳ thi ngoại ngữ"],["자격증 시험을 준비하다","chuẩn bị kỳ thi chứng chỉ"],["인턴 활동을 하다","thực tập"],["시간을 알차게 보내다","sử dụng thời gian một cách bổ ích"],["보람을 느끼다","cảm thấy việc mình làm có ý nghĩa"],["잊지 못할 경험을 하다","có một trải nghiệm không thể quên"]],
+e:[["방학","kỳ nghỉ học"],["대학생","sinh viên đại học"],["자기 계발","phát triển bản thân"],["재능","tài năng"],["재능 기부","đóng góp tài năng"],["도움을 주다","giúp đỡ"],["어르신","người lớn tuổi (kính trọng)"],["이야기를 들어 주다","lắng nghe câu chuyện của ai đó"]],
+g:[{f:"-아도/어도",s:"dù / cho dù",m:"Dù / cho dù — kết quả vẫn xảy ra bất chấp điều kiện phía trước.",ex:[["아무리 바빠도 한국어를 공부해요.","Dù bận đến đâu tôi vẫn học tiếng Hàn."]],note:"가다→가도 · 먹다→먹어도 · 공부하다→공부해도 · 학생이다→학생이어도/학생이라도"},
+{f:"-아/어 드리다",s:"làm gì cho người trên",m:"Làm việc gì đó cho người lớn tuổi / người được kính trọng (cách nói khiêm nhường).",ex:[["할머니께 책을 읽어 드렸어요.","Tôi đã đọc sách cho bà."]],note:"Người nhận thường được đánh dấu bằng 께."}],
+p:null,cul:null,ts:"Kể về một kỳ nghỉ hoặc trải nghiệm tình nguyện đáng nhớ.",tw:"Viết về một tài năng bạn có thể đóng góp cho mọi người."},
+
+{n:2,th:0,t:"티켓을 구하는 게 쉽지 않았을 텐데 어떻게 구했어요?",tv:"Chắc mua vé không dễ đâu, bạn mua thế nào vậy?",tp:"공연과 팬클럽 활동",tpv:"Biểu diễn & hoạt động fan",
+goals:["Nói về buổi biểu diễn, hoạt động fanclub","Giới thiệu nghệ sĩ yêu thích","Bày tỏ lo lắng về việc có thể xảy ra","Phỏng đoán tình huống quá khứ","Nêu cảm nhận sau sự kiện"],
+c:[["콘서트","buổi hòa nhạc"],["공연","buổi biểu diễn"],["연주회","buổi hòa nhạc nhạc cụ"],["사인회","buổi ký tặng"],["팬 미팅","buổi gặp người hâm mộ"],["표를 예매하다","đặt vé trước"],["표가 매진되다","vé được bán hết"],["팬클럽에 가입하다","tham gia câu lạc bộ người hâm mộ"],["기념품을 구입하다","mua đồ lưu niệm"],["단체 응원을 하다","cổ vũ theo nhóm"],["커버 댄스를 추다","nhảy cover"],["감동적이다","cảm động"],["인상적이다","gây ấn tượng"],["환상적이다","tuyệt vời, kỳ diệu"]],
+e:[["티켓을 구하다","tìm / mua được vé"],["연예인","nghệ sĩ giải trí"],["배우","diễn viên"],["가수","ca sĩ"],["팬","người hâm mộ"],["응원봉","gậy cổ vũ"],["굿즈","hàng hóa cho fan"],["바자회","hội chợ gây quỹ"],["급하게","một cách gấp gáp"],["서두르다","vội, khẩn trương"]],
+g:[{f:"-(으)ㄹ까 봐",s:"vì sợ rằng…",m:"Vì lo / sợ rằng một việc có thể xảy ra. Hành động sau thường để phòng tránh điều lo sợ đó.",ex:[["표가 매진될까 봐 일찍 예매했어요.","Tôi đặt vé sớm vì sợ vé bán hết."]],note:null},
+{f:"-(으)ㄹ 텐데",s:"chắc là… (làm nền)",m:"Chắc là / có lẽ — phỏng đoán làm nền cho câu hỏi, đề nghị hoặc nhận xét phía sau.",ex:[["표를 구하기 어려웠을 텐데 어떻게 구했어요?","Chắc việc tìm vé khó lắm, bạn tìm được bằng cách nào?"]],note:null}],
+p:["현실 발음 · 고모음화","Phát âm thực tế trong khẩu ngữ; hiện tượng nâng cao nguyên âm."],cul:null,
+ts:"Giới thiệu ca sĩ / diễn viên / nghệ sĩ yêu thích.",tw:"Viết cảm nhận sau một buổi concert, biểu diễn hoặc hội chợ gây quỹ."},
+
+{n:3,th:1,t:"매운 음식을 진짜 잘 먹는구나",tv:"Hóa ra bạn ăn cay giỏi thật đấy",tp:"맛과 식감",tpv:"Vị & kết cấu món ăn",
+goals:["Miêu tả vị và kết cấu món ăn","Miêu tả phản ứng cơ thể sau khi ăn","Gợi ý / giới thiệu món ăn","Đưa thông tin nền (-거든요)","Bày tỏ điều mới nhận ra (-구나)"],
+c:[["시다","chua"],["달다","ngọt"],["쓰다","đắng"],["짜다","mặn"],["맵다","cay"],["달콤하다","ngọt dịu, ngọt ngào"],["매콤하다","hơi cay, cay ngon"],["얼큰하다","cay nóng (món có nước)"],["싱겁다","nhạt"],["담백하다","thanh, nhẹ vị, không ngấy"],["바삭하다","giòn"],["부드럽다","mềm"],["입안이 얼얼하다","miệng bị tê rát"],["속이 쓰리다","xót / nóng rát dạ dày"],["속이 편안하다","bụng dạ dễ chịu"]],
+e:[["맛","vị"],["식감","kết cấu thức ăn"],["느끼하다","ngấy, nhiều dầu mỡ"],["고소하다","thơm béo, bùi"],["질기다","dai"],["눅눅하다","ỉu, ẩm"],["설탕","đường"],["소금","muối"],["고추","ớt"],["육류","nhóm thịt"],["어류","cá và thủy sản"],["채소류","nhóm rau"]],
+g:[{f:"-거든요",s:"thực ra là / vì (nền)",m:"Thực ra là / bởi vì — đưa thông tin nền mà người nghe có thể chưa biết. Rất phổ biến trong hội thoại.",ex:[["저는 매운 음식을 잘 못 먹거든요.","Thực ra tôi không ăn cay giỏi."]],note:"Không dùng máy móc thay cho mọi cách nói “vì”."},
+{f:"-는구나 / -구나",s:"hóa ra là…!",m:"Hóa ra / ra là — bày tỏ điều vừa mới phát hiện hoặc nhận ra.",ex:[["매운 음식을 정말 잘 먹는구나.","Hóa ra bạn ăn cay rất giỏi."],["이 음식이 정말 맵구나.","Hóa ra món này cay thật."]],note:"Động từ + 는구나 · Tính từ + 구나"}],
+p:null,cul:null,ts:"Miêu tả món bạn thích, không thích, ăn được và không ăn được.",tw:"Xếp hạng các món Hàn yêu thích và giải thích lý do."},
+
+{n:4,th:1,t:"채소부터 씻어서 썰어 놓자",tv:"Mình rửa rau rồi thái sẵn trước nhé",tp:"조리 도구와 조리법",tpv:"Dụng cụ & phương pháp nấu ăn",
+goals:["Gọi tên dụng cụ nấu ăn","Giải thích quá trình nấu","Nói về việc chuẩn bị sẵn (-아/어 놓다)","Trình bày các bước theo thứ tự (-은 다음에)","Giới thiệu một công thức"],
+c:[["냄비","nồi"],["프라이팬","chảo rán"],["전기밥솥","nồi cơm điện"],["가스레인지","bếp ga"],["전자레인지","lò vi sóng"],["칼","dao"],["도마","thớt"],["그릇","bát, tô, vật đựng"],["접시","đĩa"],["주걱","muôi xới cơm"],["국자","muôi múc canh"],["과일을 깎다","gọt trái cây"],["껍질을 벗기다","bóc / lột vỏ"],["채를 썰다","thái sợi"],["달걀을 삶다","luộc trứng"],["채소를 볶다","xào rau"],["생선을 굽다","nướng cá"],["만두를 찌다","hấp mandu"],["재료를 넣다","cho nguyên liệu vào"],["재료를 섞다","trộn nguyên liệu"]],
+e:[["조리 도구","dụng cụ nấu ăn"],["조리법","phương pháp nấu ăn"],["재료","nguyên liệu"],["씻다","rửa"],["썰다","thái, cắt"],["다지다","băm nhỏ"],["볶다","xào"],["굽다","nướng"],["삶다","luộc"],["찌다","hấp"],["끓이다","đun, nấu sôi"],["튀기다","chiên ngập dầu"],["양념","gia vị / hỗn hợp ướp"]],
+g:[{f:"-아/어 놓다",s:"làm sẵn, giữ trạng thái",m:"Thực hiện hành động trước và giữ nguyên trạng thái kết quả.",ex:[["채소를 미리 썰어 놓았어요.","Tôi đã thái rau sẵn."]],note:"Rút gọn: 놓았어요 → 놨어요 · 해 놓았어요 → 해 놨어요"},
+{f:"-(으)ㄴ 다음에",s:"sau khi làm…",m:"Sau khi làm việc gì đó.",ex:[["채소를 씻은 다음에 썰어요.","Sau khi rửa rau thì thái."]],note:"Liên quan: -고 나서, -(으)ㄴ 후에"}],
+p:["끊어 말하기","Ngắt câu thành cụm ý tự nhiên khi nói."],cul:null,
+ts:"Giải thích cách nấu một món quen thuộc.",tw:"Viết công thức ngắn: nguyên liệu + các bước theo thứ tự."},
+
+{n:5,th:2,t:"딴생각을 하다가 버스를 놓쳐 버렸어요",tv:"Mải nghĩ chuyện khác nên tôi lỡ mất xe buýt",tp:"실수",tpv:"Sai sót",
+goals:["Kể về một sai sót","Giải thích nguyên nhân – kết quả","Diễn đạt kết quả đáng tiếc (-아/어 버리다)","Kể sự việc nối tiếp ngay (-자마자)","Động viên người mắc lỗi"],
+c:[["잊어버리다","quên mất"],["깜빡하다","chợt quên, lỡ quên"],["잃어버리다","làm mất"],["놓고 오다","để quên rồi đi khỏi"],["두고 오다","để lại, bỏ quên"],["넘어지다","ngã"],["부딪히다","va vào"],["놓치다","lỡ xe, lỡ cơ hội"],["떨어뜨리다","làm rơi"],["깨뜨리다","làm vỡ"],["망가뜨리다","làm hỏng"],["늦잠을 자다","ngủ dậy muộn"],["지각하다","đến muộn"],["딴생각을 하다","nghĩ chuyện khác, mất tập trung"],["한눈팔다","lơ đãng, nhìn sang việc khác"]],
+e:[["실수","sai sót"],["잘못","lỗi, điều sai"],["다행히","may mắn thay"],["결국","cuối cùng"],["당분간","trong một thời gian"],["신제품","sản phẩm mới"],["충전하다","sạc"],["잠이 들다","ngủ thiếp đi"],["상하다","bị hỏng, bị tổn hại"]],
+g:[{f:"-자마자",s:"ngay sau khi",m:"Sự việc thứ hai xảy ra ngay lập tức sau sự việc thứ nhất.",ex:[["집에 도착하자마자 연락했어요.","Tôi liên lạc ngay khi về đến nhà."]],note:null},
+{f:"-아/어 버리다",s:"lỡ / mất… (hoàn tất)",m:"Hoàn tất hẳn một hành động; tùy ngữ cảnh thể hiện nhẹ nhõm, tiếc nuối hoặc kết quả không mong muốn, không đảo ngược được.",ex:[["중요한 파일을 지워 버렸어요.","Tôi đã lỡ xóa mất tệp quan trọng."]],note:null}],
+p:null,cul:null,ts:"Kể về một sai sót và giải thích vì sao nó xảy ra.",tw:"Viết nhật ký về một sai sót hoặc một lời nhắn động viên."},
+
+{n:6,th:2,t:"제가 좀 참을걸 그랬어요",tv:"Lẽ ra tôi nên nhịn một chút",tp:"사과와 용서",tpv:"Xin lỗi & tha thứ",
+goals:["Xin lỗi đúng cách","Đáp lại lời xin lỗi","Giải thích hiểu lầm","Bày tỏ hối tiếc về quyết định trong quá khứ","Làm hòa sau bất đồng"],
+c:[["참다","chịu đựng, kiềm chế"],["말실수하다","lỡ lời"],["오해하다","hiểu lầm"],["후회하다","hối hận"],["변명하다","biện minh, thanh minh"],["사과하다","xin lỗi"],["용서하다","tha thứ"],["화해하다","làm hòa"],["오해를 풀다","giải tỏa hiểu lầm"],["사과드리겠습니다","tôi xin gửi lời xin lỗi"],["불편을 드려 죄송합니다","xin lỗi vì đã gây bất tiện"],["대단히 죄송합니다","tôi vô cùng xin lỗi"],["실례가 많았습니다","tôi đã rất thất lễ"],["앞으로 주의하겠습니다","từ nay tôi sẽ chú ý hơn"],["그럴 수도 있죠","chuyện đó cũng có thể xảy ra mà"],["신경 쓰지 마세요","đừng bận tâm"],["일부러 그런 것도 아닌데요, 뭘","bạn đâu có cố ý, không sao đâu"],["실수한 건데요, 뭘","chỉ là một sai sót thôi mà"]],
+e:[["다투다","tranh cãi"],["싸우다","cãi nhau, đánh nhau"],["화를 내다","nổi giận"],["미안하다","cảm thấy có lỗi"],["잘못을 인정하다","thừa nhận lỗi"]],
+g:[{f:"-았었/었었-",s:"đã từng (quá khứ xa)",m:"Từng làm / từng ở trạng thái trong quá khứ; thường ngụ ý tình huống đó không còn đúng ở hiện tại.",ex:[["예전에 그 근처에서 살았었어요.","Trước đây tôi từng sống gần đó."]],note:null},
+{f:"-(으)ㄹ걸 그랬다",s:"lẽ ra nên…",m:"Lẽ ra nên làm — bày tỏ hối tiếc về việc đã làm hoặc không làm trong quá khứ.",ex:[["친구의 말을 먼저 들어 볼걸 그랬어요.","Lẽ ra tôi nên nghe bạn mình nói trước."]],note:null}],
+p:["구개음화","Ngạc hóa: ㄷ/ㅌ + 이 → [지/치]. Ví dụ 같이 → [가치]."],cul:null,
+ts:"Đóng vai: xin lỗi và đáp lại lời xin lỗi.",tw:"Viết tin nhắn chấp nhận lời xin lỗi và hóa giải hiểu lầm."},
+
+{n:7,th:3,t:"캠핑을 같이 간다거나 친목 모임을 해요",tv:"Chúng tôi đi cắm trại cùng nhau hoặc tổ chức gặp gỡ giao lưu",tp:"동호회 활동",tpv:"Câu lạc bộ sở thích",
+goals:["Giới thiệu một câu lạc bộ sở thích","Nêu ví dụ hoạt động (-는다거나)","Mời tham gia","Nêu lợi ích khi tham gia","Viết thông báo tuyển thành viên"],
+c:[["동호회","câu lạc bộ sở thích"],["동아리","câu lạc bộ (trong trường học)"],["소모임","nhóm nhỏ"],["운동 동호회","câu lạc bộ thể thao"],["음식 동호회","câu lạc bộ ẩm thực"],["야외 활동 동호회","câu lạc bộ hoạt động ngoài trời"],["마라톤","marathon"],["자전거","xe đạp"],["스키","trượt tuyết"],["와인","rượu vang"],["맛집 탐방","khám phá quán ăn ngon"],["캠핑","cắm trại"],["낚시","câu cá"],["동호회를 만들다","thành lập câu lạc bộ"],["회원을 모집하다","tuyển thành viên"],["회비를 내다","đóng hội phí"],["동호회에 가입하다","gia nhập câu lạc bộ"],["동호회에 나가다","tham dự sinh hoạt CLB"],["모임을 하다","tổ chức buổi gặp"],["정보를 공유하다","chia sẻ thông tin"],["인맥을 쌓다","xây dựng quan hệ"],["친목을 다지다","củng cố quan hệ thân thiết"]],
+e:[["회원","thành viên"],["정기 모임","buổi gặp định kỳ"],["가입 조건","điều kiện gia nhập"],["모집 안내","thông báo tuyển thành viên"],["권유하다","khuyên, mời tham gia"],["암벽 등반","leo vách đá"],["꽃꽂이","cắm hoa"],["정기적으로","định kỳ"]],
+g:[{f:"-아/어 가지고",s:"vì… nên (khẩu ngữ)",m:"Liên kết nguyên nhân hoặc trình tự trong hội thoại (vì / do / rồi).",ex:[["영화를 좋아해 가지고 영화 동호회를 만들었어요.","Vì thích phim nên tôi đã thành lập CLB phim."]],note:"Chủ yếu dùng khi nói; ít phù hợp văn viết trang trọng."},
+{f:"-는다거나/ㄴ다거나",s:"chẳng hạn như…",m:"Liệt kê ví dụ tiêu biểu (không phải danh sách đầy đủ). Danh từ dùng -(이)라거나.",ex:[["주말에는 캠핑을 간다거나 등산을 해요.","Cuối tuần tôi làm những việc như cắm trại hoặc leo núi."],["커피라거나 홍차를 마셔요.","Tôi uống những thứ như cà phê hoặc trà đen."]],note:null}],
+p:null,cul:null,ts:"Thiết kế và giới thiệu một câu lạc bộ sở thích.",tw:"Viết thông báo tuyển thành viên câu lạc bộ."},
+
+{n:8,th:3,t:"일하느라고 바빠서 오랫동안 못 갔어요",tv:"Vì bận làm việc nên đã lâu tôi không đi được",tp:"휴가",tpv:"Kỳ nghỉ",
+goals:["Hỏi–đáp về trải nghiệm kỳ nghỉ","Miêu tả địa điểm nghỉ dưỡng","Giải thích lý do không làm được (-느라고)","Đáp khiêm tốn khi được khen (-기는요)","Nói về kiểu nghỉ dưỡng yêu thích"],
+c:[["휴가","kỳ nghỉ phép"],["휴가지","địa điểm nghỉ dưỡng"],["관광지","địa điểm du lịch"],["휴양지","khu nghỉ dưỡng"],["유적지","di tích lịch sử"],["호텔","khách sạn"],["펜션","nhà nghỉ kiểu pension"],["리조트","khu resort"],["게스트 하우스","nhà khách, hostel nhỏ"],["재충전을 하다","nạp lại năng lượng"],["밀린 일을 처리하다","xử lý công việc tồn đọng"],["여유를 즐기다","tận hưởng thời gian thư thả"],["볼거리가 많다","có nhiều thứ để xem"],["물가가 저렴하다","giá cả phải chăng"],["자연 경관이 뛰어나다","phong cảnh thiên nhiên nổi bật"],["관광지를 둘러보다","tham quan các điểm du lịch"],["현지 문화를 체험하다","trải nghiệm văn hóa địa phương"],["기념품을 사다","mua quà lưu niệm"]],
+e:[["휴가를 내다","xin nghỉ phép"],["휴가를 보내다","trải qua kỳ nghỉ"],["예약하다","đặt trước"],["숙박하다","lưu trú"],["야경","cảnh đêm"],["생소하다","xa lạ"],["낯설다","không quen thuộc"]],
+g:[{f:"-느라고",s:"vì bận… nên không…",m:"Vì bận làm A nên không làm được B. Kết quả thường tiêu cực.",ex:[["일하느라고 여행 준비를 못 했어요.","Vì bận làm việc nên tôi không chuẩn bị được chuyến đi."]],note:"Chỉ gắn với động từ · hai vế cùng chủ ngữ · hai hành động trùng thời gian · kết quả thường tiêu cực."},
+{f:"-기는요",s:"đâu có… (khiêm tốn)",m:"Đâu có — từ chối / làm nhẹ lời khen một cách khiêm tốn; cũng đáp nhẹ lời cảm ơn, xin lỗi.",ex:[["잘하기는요. 아직 많이 부족해요.","Tôi đâu có giỏi. Vẫn còn thiếu nhiều lắm."]],note:null}],
+p:["경음화","Căng âm hóa: phụ âm thường → âm căng sau âm tắc. Ví dụ 학교 → [학꾜]."],cul:["호캉스","Hocance = hotel + vacance: kỳ nghỉ trọn vẹn tại khách sạn, xu hướng nghỉ dưỡng phổ biến ở Hàn Quốc."],
+ts:"Nói về địa điểm và kiểu nghỉ dưỡng bạn thích.",tw:"Viết kế hoạch nghỉ phép cụ thể hoặc kể về một kỳ nghỉ đã qua."},
+
+{n:9,th:4,t:"두 사람이 많이 부러운 모양이에요",tv:"Có vẻ mọi người rất ghen tị với hai người",tp:"결혼과 결혼식",tpv:"Kết hôn & lễ cưới",
+goals:["Nói về hẹn hò và kết hôn","Miêu tả một lễ cưới","Suy đoán từ điều nhìn thấy (-는 모양이다)","Miêu tả đám cưới mong muốn","So sánh cưới truyền thống và hiện đại"],
+c:[["연애하다","hẹn hò, yêu đương"],["선을 보다","xem mắt (mai mối)"],["청혼하다","cầu hôn"],["결혼하다","kết hôn"],["청첩장","thiệp cưới"],["결혼식","lễ cưới"],["결혼식장","địa điểm tổ chức lễ cưới"],["신랑","chú rể"],["신부","cô dâu"],["전통 혼례","hôn lễ truyền thống"],["신혼여행","tuần trăng mật"],["축의금","tiền mừng cưới"],["주례","người chủ trì hôn lễ"],["신랑 신부 입장","cô dâu chú rể tiến vào"],["주례사","bài phát biểu chủ hôn"],["혼인 서약서 낭독","đọc lời thề hôn nhân"],["축가","bài hát chúc mừng đám cưới"],["신랑 신부 행진","cô dâu chú rể diễu bước"],["폐백을 드리다","làm nghi lễ pyebaek"],["피로연","tiệc chiêu đãi cưới"]],
+e:[["하객","khách dự cưới"],["식순","trình tự buổi lễ"],["사회를 맡다","đảm nhận vai trò MC"],["예산","ngân sách"],["커플","cặp đôi"],["신혼 살림","cuộc sống / đồ dùng vợ chồng mới cưới"],["장가가다","lấy vợ (nam)"],["시집가다","lấy chồng (nữ)"]],
+g:[{f:"-는/(으)ㄴ 모양이다",s:"có vẻ là…",m:"Có vẻ là — suy đoán dựa trên bằng chứng nhìn thấy hoặc tình huống cụ thể.",ex:[["사람들이 기다리는 모양이에요.","Có vẻ mọi người đang chờ."],["결혼식이 끝난 모양이에요.","Có vẻ lễ cưới đã kết thúc."]],note:null},
+{f:"같이 / 같은",s:"giống như",m:"Giống như, như — diễn tả sự tương tự.",ex:[["영화같이 아름다운 결혼식이었어요.","Đó là một đám cưới đẹp như phim."]],note:"N같이 + động từ/tính từ · N 같은 + danh từ"}],
+p:null,cul:null,ts:"Miêu tả đám cưới mà bạn mong muốn.",tw:"So sánh văn hóa cưới truyền thống và hiện đại."},
+
+{n:10,th:4,t:"떡국을 한 그릇 다 먹었더니 배가 불러요",tv:"Ăn hết một bát tteokguk nên tôi thấy no",tp:"한국의 명절",tpv:"Ngày lễ truyền thống Hàn Quốc",
+goals:["Giới thiệu một ngày lễ tiêu biểu","Miêu tả món ăn, phong tục, lời chúc","Kể lại điều đã quan sát (-던데요)","Nêu kết quả sau hành động (-았더니)","So sánh ngày lễ giữa các nền văn hóa"],
+c:[["명절","ngày lễ truyền thống"],["설날","Tết âm lịch Hàn Quốc"],["추석","lễ Chuseok"],["정월 대보름","rằm tháng Giêng âm lịch"],["차례를 지내다","làm lễ tưởng nhớ tổ tiên"],["떡국을 먹다","ăn canh bánh gạo"],["송편을 먹다","ăn bánh songpyeon"],["오곡밥을 먹다","ăn cơm ngũ cốc"],["부럼을 깨물다","cắn hạt dịp Daeboreum"],["세배를 하다","lạy chúc Tết"],["세배를 드리다","kính cẩn lạy chúc Tết người lớn"],["세뱃돈을 주다","cho tiền mừng tuổi"],["세뱃돈을 받다","nhận tiền mừng tuổi"],["덕담을 하다","nói lời chúc tốt đẹp"],["달맞이를 하다","ngắm / đón trăng"],["소원을 빌다","cầu ước điều gì"],["윷놀이를 하다","chơi yutnori"],["씨름을 하다","đấu vật truyền thống"],["새해 복 많이 받으세요","chúc năm mới nhiều phúc lành"],["풍성한 한가위 보내세요","chúc Chuseok sung túc"]],
+e:[["음력","âm lịch"],["양력","dương lịch"],["한가위","tên khác của Chuseok"],["한과","bánh kẹo truyền thống"],["불꽃놀이","pháo hoa"],["연날리기","thả diều"],["해돋이","ngắm mặt trời mọc"],["그릇","bát, tô"],["배가 부르다","no bụng"],["솜씨","tay nghề, sự khéo léo"]],
+g:[{f:"-던데요",s:"tôi thấy… (quan sát)",m:"Hồi tưởng điều bản thân đã quan sát / trải nghiệm, dùng làm nền cho nhận xét hoặc câu trả lời.",ex:[["설날에 한복을 입는 사람이 많던데요.","Tôi thấy vào Seollal có nhiều người mặc hanbok."]],note:null},
+{f:"-았더니/었더니",s:"làm xong thì thấy…",m:"Sau khi (tôi) làm việc đó thì phát hiện kết quả. Thường dùng với hành động của chính người nói.",ex:[["떡국을 먹었더니 배가 불렀어요.","Sau khi ăn tteokguk thì tôi thấy no."]],note:null}],
+p:["비음화","Mũi hóa: ㄱ/ㄷ/ㅂ + ㄴ/ㅁ → [ㅇ/ㄴ/ㅁ]. Ví dụ 먹는 → [멍는]."],cul:["삼행시","Thử sáng tác một bài thơ ba dòng (mỗi dòng bắt đầu bằng một âm tiết của từ chủ đề)."],
+ts:"Giới thiệu Tết, Seollal, Chuseok hoặc một ngày lễ tiêu biểu.",tw:"So sánh Tết Việt Nam và một ngày lễ Hàn Quốc."},
+
+{n:11,th:5,t:"자격증 준비나 외국어 공부도 미리 해 두면 좋을 거야",tv:"Chuẩn bị sẵn chứng chỉ hay ngoại ngữ từ trước thì sẽ tốt đấy",tp:"취업",tpv:"Việc làm",
+goals:["Nói về chuẩn bị xin việc","Trình tự ứng tuyển","Điều kiện công ty mong muốn","Diễn đạt sự tiến triển liên tục (-아/어 가다)","Chuẩn bị trước cho sau này (-아/어 두다)"],
+c:[["신입 사원","nhân viên mới"],["경력 사원","nhân viên có kinh nghiệm"],["직장 상사","cấp trên nơi làm việc"],["직장 동료","đồng nghiệp"],["적성에 맞다","phù hợp với năng khiếu"],["이력서를 쓰다","viết CV"],["자기소개서를 쓰다","viết thư tự giới thiệu"],["입사 지원서를 내다","nộp đơn xin vào công ty"],["면접을 보다","tham gia phỏng vấn"],["입사하다","vào làm tại công ty"],["승진하다","thăng chức"],["복지가 좋다","phúc lợi tốt"],["연봉이 높다","lương năm cao"],["인턴십을 하다","thực tập"],["자격증을 따다","lấy chứng chỉ"],["경력을 쌓다","tích lũy kinh nghiệm"]],
+e:[["취업","có việc làm"],["구직","tìm việc"],["채용 공고","thông báo tuyển dụng"],["지원자","ứng viên"],["합격하다","đỗ, được tuyển"],["불합격하다","trượt, không được tuyển"],["근무 환경","môi trường làm việc"],["업무","nhiệm vụ công việc"],["외국어 능력","khả năng ngoại ngữ"],["취업 정보를 얻다","tìm thông tin việc làm"]],
+g:[{f:"-아/어 가다",s:"dần dần… (về tương lai)",m:"Hành động / trạng thái tiếp tục tiến triển từ hiện tại về tương lai.",ex:[["필요한 경험을 조금씩 쌓아 가고 있어요.","Tôi đang dần tích lũy kinh nghiệm cần thiết."],["한국어 실력이 점점 좋아져 가요.","Khả năng tiếng Hàn đang dần tốt lên."]],note:"So sánh: -아/어 오다 = tiến triển từ quá khứ đến hiện tại."},
+{f:"-아/어 두다",s:"làm sẵn để dùng sau",m:"Làm trước và giữ kết quả để sử dụng về sau; nhấn mạnh sự chuẩn bị.",ex:[["면접 질문을 미리 준비해 두었어요.","Tôi đã chuẩn bị trước câu hỏi phỏng vấn."]],note:"-아/어 놓다 nhấn trạng thái được duy trì; -아/어 두다 nhấn chuẩn bị cho nhu cầu sau này."}],
+p:null,cul:null,ts:"Nói về chuẩn bị xin việc và điều kiện nơi làm việc mong muốn.",tw:"Viết về kiểu công ty / nơi làm việc bạn muốn."},
+
+{n:12,th:5,t:"한국으로 유학을 가려고 준비하는 중이에요",tv:"Tôi đang chuẩn bị đi du học Hàn Quốc",tp:"유학 준비",tpv:"Chuẩn bị du học",
+goals:["Nói về kế hoạch du học","Miêu tả thủ tục, giấy tờ cần chuẩn bị","Hành động đang diễn ra (-는 중이다)","Công nhận một điểm + bổ sung tương phản (-기는 하다)","Hoàn thành / thảo luận đơn đăng ký"],
+c:[["유학","du học"],["유학을 계획하다","lên kế hoạch du học"],["유학원을 알아보다","tìm hiểu trung tâm tư vấn du học"],["유학 사이트를 검색하다","tìm kiếm trang web du học"],["대학원에 등록하다","đăng ký học cao học"],["집을 구하다","tìm nhà"],["비자 면접을 보다","phỏng vấn visa"],["비자를 발급받다","được cấp visa"],["등록금을 내다","đóng học phí"],["생활비를 벌다","kiếm chi phí sinh hoạt"],["재학 증명서를 떼다","xin giấy xác nhận đang học"],["서류를 떼다","xin giấy tờ"],["서류를 제출하다","nộp giấy tờ"],["학비를 지원받다","nhận hỗ trợ học phí"]],
+e:[["유학 준비","chuẩn bị du học"],["진로","định hướng tương lai"],["학사","cử nhân"],["석사","thạc sĩ"],["박사","tiến sĩ"],["전공","chuyên ngành"],["입학","nhập học"],["입학 신청서","đơn đăng ký nhập học"],["지원 자격","điều kiện ứng tuyển"],["장학금","học bổng"],["기숙사","ký túc xá"],["수강 신청","đăng ký môn học"],["학생증","thẻ sinh viên"],["현지 친구","bạn bè địa phương"]],
+g:[{f:"-기는 하다",s:"đúng là… (nhưng)",m:"Đúng là / tuy đúng là — công nhận một sự thật nhưng thường chuẩn bị cho sự tương phản hoặc dè dặt phía sau.",ex:[["한국어가 어렵기는 하지만 재미있어요.","Tiếng Hàn đúng là khó nhưng thú vị."]],note:"V-기는 하다 · A-기는 하다 · N이기는 하다"},
+{f:"-는 중이다",s:"đang trong quá trình",m:"Đang trong quá trình làm gì đó.",ex:[["입학 신청서를 작성하는 중이에요.","Tôi đang điền đơn đăng ký nhập học."]],note:"Dùng cho hành động đang diễn ra; thường không dùng với tính từ trạng thái."}],
+p:["격음화","Bật hơi hóa: ㅎ + ㄱ/ㄷ/ㅂ/ㅈ → [ㅋ/ㅌ/ㅍ/ㅊ]. Ví dụ 좋다 → [조타]."],cul:null,
+ts:"Trình bày kế hoạch du học và những việc cần chuẩn bị.",tw:"Hoàn thành đơn nhập học hoặc viết kế hoạch chuẩn bị du học."}
+];
+
+const CHECK=["Dùng đúng tiểu từ kính ngữ cho chủ ngữ và người nhận (께서/께)","Dùng thành thạo thì quá khứ, hiện tại, tương lai","Tạo được định ngữ bổ nghĩa cho danh từ (-는/-은/-을)","Nêu lý do bằng -아서/어서, -(으)니까, -기 때문에","Nói về kinh nghiệm với -(으)ㄴ 적이 있다","Nói kế hoạch với -(으)려고 하다, -(으)ㄹ 계획이다","So sánh bằng 보다, 비슷하다/다르다","Nối hành động bằng -고, -고 나서, -(으)ㄴ 후에","Viết được đoạn văn liền mạch (không rời rạc từng câu)","Nói khoảng 2 phút về một chủ đề quen thuộc"];
+
+/* ================= STATE ================= */
+const KEY="hana3b_v1";
+let S=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.cards)return d}catch(e){}return{cards:{},xp:0,streak:0,lastDay:null,last:null,incExp:false,chk:{}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function touchStreak(){const t=new Date().toDateString();if(S.lastDay===t)return;const y=new Date(Date.now()-864e5).toDateString();S.streak=(S.lastDay===y)?S.streak+1:1;S.lastDay=t;save()}
+
+/* ================= SRS ================= */
+function cid(l,t,i){return l+"-"+t+"-"+i}
+function lessonVocab(l,inclExp){const o=LS[l-1];let a=o.c.map((p,i)=>({id:cid(l,"c",i),ko:p[0],vi:p[1],l,core:true}));if(inclExp)a=a.concat(o.e.map((p,i)=>({id:cid(l,"e",i),ko:p[0],vi:p[1],l,core:false})));return a}
+let VMAP={};LS.forEach(o=>{lessonVocab(o.n,true).forEach(v=>VMAP[v.id]=v)});
+const GALL=LS.flatMap(o=>o.g.map(g=>({...g,ln:o.n})));
+
+function grade(id,g){const now=Date.now();let c=S.cards[id]||{ease:2.5,int:0,reps:0,lapse:0};
+ if(g===0){c.ease=Math.max(1.3,c.ease-0.2);c.int=0;c.due=now+6e5;c.lapse=(c.lapse||0)+1;c.reps=Math.max(c.reps,1)}
+ else{if(c.int===0){c.int=g===1?0.5:g===2?1:3}else{c.int=g===1?Math.max(1,c.int*1.2):g===2?c.int*c.ease:Math.min(365,c.int*c.ease*1.3)}
+  if(g===1)c.ease=Math.max(1.3,c.ease-0.15);if(g===3)c.ease=Math.min(2.8,c.ease+0.15);
+  c.reps++;c.due=now+c.int*864e5}
+ S.cards[id]=c;S.xp+=(g===0?0:g===1?2:5);touchStreak();save()}
+function fmtI(d){if(d<0.05)return"10분";if(d<1)return Math.max(1,Math.round(d*24))+"시간";return Math.round(d)+"일"}
+function pv(id,g){const c=S.cards[id];if(g===0)return"10분";if(!c||c.int===0)return g===1?"12시간":g===2?"1일":"3일";let i=g===1?Math.max(1,c.int*1.2):g===2?c.int*c.ease:Math.min(365,c.int*c.ease*1.3);return fmtI(i)}
+function mast(id){const c=S.cards[id];if(!c)return 0;if(c.int<1)return 1;if(c.int<7)return 2;if(c.int<21)return 3;return 4}
+const MLBL=[["새 단어","#A9A395"],["눈에 익음","#C6A15B"],["도움 필요","#C07A4D"],["혼자 사용","#8A9660"],["습득 완료","#5E7A55"]];
+function dueIds(){const now=Date.now();return Object.keys(S.cards).filter(id=>S.cards[id].due<=now&&VMAP[id]&&(S.incExp||VMAP[id].core))}
+function lessonProg(l){const vs=lessonVocab(l,false);const s=vs.reduce((a,v)=>a+mast(v.id),0);return s/(vs.length*4)}
+function studiedLessons(){const set=new Set();Object.keys(S.cards).forEach(id=>{if(VMAP[id])set.add(VMAP[id].l)});return[...set]}
+
+/* ================= TTS ================= */
+function speak(t){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(t);u.lang="ko-KR";u.rate=0.92;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function spk(e,t){e.stopPropagation();speak(t)}
+
+/* ================= ROUTER ================= */
+let route={v:"home"},stack=[];
+function go(v,arg){stack.push(route);route={v,arg};render()}
+function back(){route=stack.pop()||{v:"home"};render()}
+function setTab(v){stack=[];sess=null;qz=null;route={v};render()}
+
+/* ================= SESSIONS ================= */
+let sess=null,qz=null;
+function startFlash(l){let cards;const now=Date.now();
+ if(l){const vs=lessonVocab(l,S.incExp);const due=vs.filter(v=>S.cards[v.id]&&S.cards[v.id].due<=now);const nw=vs.filter(v=>!S.cards[v.id]);cards=[...due,...nw].slice(0,20);if(!cards.length)cards=shuffle([...vs]).slice(0,20)}
+ else{cards=dueIds().map(id=>VMAP[id]).slice(0,40)}
+ if(!cards.length)return;
+ cards=cards.map(v=>({...v,dir:(mast(v.id)>=3&&Math.random()<0.7)?"vk":"kv"}));
+ sess={cards,i:0,flipped:false,done:false,n:{0:0,1:0,2:0,3:0},from:l||null};
+ go("flash")}
+function flipCard(){if(sess&&!sess.done){sess.flipped=true;render()}}
+function doGrade(g){const c=sess.cards[sess.i];grade(c.id,g);sess.n[g]++;sess.i++;sess.flipped=false;if(sess.i>=sess.cards.length)sess.done=true;render();window.scrollTo(0,0)}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function startQuiz(l){let pool,gs;
+ if(l){pool=lessonVocab(l,S.incExp);gs=LS[l-1].g.map(g=>({...g,ln:l}))}
+ else{const sl=studiedLessons();if(!sl.length)return;pool=sl.flatMap(x=>lessonVocab(x,S.incExp));gs=shuffle(GALL.filter(g=>sl.includes(g.ln))).slice(0,2)}
+ const qs=[];const items=shuffle([...pool]).slice(0,6);
+ items.forEach((it,k)=>{const others=shuffle(pool.filter(p=>p.ko!==it.ko)).slice(0,3);const opts=shuffle([it,...others]);qs.push({t:k%2?"vk":"kv",item:it,opts,a:opts.indexOf(it)})});
+ gs.forEach(g=>{const d1=shuffle(GALL.filter(x=>x.f!==g.f)).slice(0,3);const o1=shuffle([g,...d1]);qs.push({t:"gm",g,opts:o1,a:o1.indexOf(g)});
+  const d2=shuffle(GALL.filter(x=>x.f!==g.f)).slice(0,3);const o2=shuffle([g,...d2]);qs.push({t:"gf",g,opts:o2,a:o2.indexOf(g)})});
+ qz={qs:shuffle(qs).slice(0,10),i:0,ans:null,score:0,wrong:[],from:l||null};
+ go("quiz")}
+function pick(oi){if(qz.ans!==null)return;const q=qz.qs[qz.i];qz.ans=oi;
+ if(oi===q.a){qz.score++;S.xp+=10}else{qz.wrong.push(q)}
+ touchStreak();save();render()}
+function nextQ(){qz.i++;qz.ans=null;render();window.scrollTo(0,0)}
+
+/* ================= UI HELPERS ================= */
+function toggleExp(){S.incExp=!S.incExp;save();render()}
+function setChk(i,v){S.chk[i]=v;save()}
+function resetAll(){if(confirm("Xóa toàn bộ tiến độ học? / 모든 학습 데이터를 초기화할까요?")){localStorage.removeItem(KEY);S=load();render()}}
+function tgl(el){el.classList.toggle("open")}
+function vrows(list,ids){return list.map((v,i)=>{const m=mast(ids?ids[i]:v.id);return `<div class="vrow" onclick="this.classList.toggle('open')">
+ <span class="dot" style="background:${MLBL[m][1]}"></span>
+ <div class="vmain"><div class="vko">${v.ko}</div><div class="vvi">${v.vi}</div></div>
+ <button class="spk" onclick="spk(event,'${v.ko.replace(/'/g,"")}')">🔊</button></div>`}).join("")}
+
+/* ================= VIEWS ================= */
+function render(){
+ ["home","lessons","practice","grammar"].forEach(t=>{const b=document.getElementById("tb-"+t);if(b)b.classList.toggle("on",route.v===t||(route.v==="lesson"&&t==="lessons")||((route.v==="flash"||route.v==="quiz")&&t==="practice"))});
+ const app=document.getElementById("app");
+ let h="";
+ if(route.v==="home")h=vHome();
+ else if(route.v==="lessons")h=vLessons();
+ else if(route.v==="lesson")h=vLesson(route.arg);
+ else if(route.v==="practice")h=vPractice();
+ else if(route.v==="grammar")h=vGrammar();
+ else if(route.v==="flash")h=vFlash();
+ else if(route.v==="quiz")h=vQuiz();
+ else if(route.v==="check")h=vCheck();
+ app.innerHTML=h;window.scrollTo(0,0)}
+
+function vHome(){const due=dueIds().length;const last=S.last?LS[S.last-1]:null;
+ const total=LS.reduce((a,o)=>a+o.c.length,0);const mastered=LS.flatMap(o=>lessonVocab(o.n,false)).filter(v=>mast(v.id)>=4).length;
+ return `<div class="pagehead"><div style="flex:1"><h1>안녕하세요 👋</h1><div class="sub">세종한국어 3B · 중급 1</div></div></div>
+ <div class="card"><div style="display:flex;gap:18px">
+  <div style="flex:1"><div class="sub">연속 학습</div><div class="serif" style="font-size:26px">🔥 ${S.streak}일</div></div>
+  <div style="flex:1"><div class="sub">XP</div><div class="serif" style="font-size:26px">${S.xp}</div></div>
+  <div style="flex:1"><div class="sub">습득 어휘</div><div class="serif" style="font-size:26px">${mastered}<span style="font-size:15px;color:var(--muted)">/${total}</span></div></div>
+ </div></div>
+ <div class="card">
+  <div style="font-weight:700;margin-bottom:2px">오늘의 복습</div>
+  <div class="sub" style="margin-bottom:12px">${due?`${due}장의 카드가 기다리고 있어요.`:"지금은 복습할 카드가 없어요. 새 단원을 학습해 보세요 🌿"}</div>
+  ${due?`<button class="btn primary" onclick="startFlash(null)">복습 시작 · ${due}장</button>`:`<button class="btn ghost" onclick="setTab('lessons')">단원 보러 가기</button>`}
+ </div>
+ ${last?`<div class="card" onclick="go('lesson',${last.n})" style="cursor:pointer">
+  <div class="sub">이어서 학습</div>
+  <div style="font-weight:700;margin:2px 0 8px">${last.n}과 · ${last.tp}</div>
+  <div class="bar"><i style="width:${Math.round(lessonProg(last.n)*100)}%"></i></div></div>`:""}
+ <div class="sec">주제별 진도</div>
+ <div class="card">${THEMES.map((t,i)=>{const ls=LS.filter(o=>o.th===i);const p=ls.reduce((a,o)=>a+lessonProg(o.n),0)/ls.length;
+   return `<div class="stat"><div><b>${i+1}. ${t[0]}</b><div class="sub" style="font-size:13px">${t[1]}</div></div><div style="width:70px"><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div></div></div>`}).join("")}</div>
+ <button class="btn mt" onclick="go('check')">📋 3B 시작 전 체크리스트</button>
+ <p class="warn mt center">이 과정은 세종학당 3B 교육과정을 따르며, TOPIK II 3급 준비에 도움이 되지만 합격을 보장하지 않습니다.</p>`}
+
+function vLessons(){return `<div class="pagehead"><div style="flex:1"><h1>학습</h1><div class="sub">6개 주제 · 12개 단원 · 24개 문법</div></div></div>
+ ${THEMES.map((t,i)=>`<div class="sec">주제 ${i+1} · ${t[0]}</div><div class="card" style="padding:6px 16px">
+ ${LS.filter(o=>o.th===i).map(o=>`<div class="lrow" onclick="go('lesson',${o.n})">
+   <div class="lnum">${o.n}과</div>
+   <div style="flex:1;min-width:0"><div class="ltit">${o.tp}</div><div class="lsub">${o.tpv}</div></div>
+   <div class="lbar"><div class="bar"><i style="width:${Math.round(lessonProg(o.n)*100)}%"></i></div></div>
+ </div>`).join("")}</div>`).join("")}`}
+
+function vLesson(n){const o=LS[n-1];S.last=n;save();
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:19px">${n}과 · ${o.tp}</h1><div class="sub">${THEMES[o.th][0]} · ${o.tpv}</div></div></div>
+ <div class="card"><div class="serif" style="font-size:18px;line-height:1.5">“${o.t}”</div><div class="sub" style="margin-top:4px">${o.tv}</div>
+  <button class="spk mt" onclick="spk(event,'${o.t.replace(/'/g,"")}')">🔊</button></div>
+ <div class="row2"><button class="btn primary" onclick="startFlash(${n})">🃏 플래시카드</button><button class="btn" onclick="startQuiz(${n})">✍️ 퀴즈</button></div>
+ <div class="sec">오늘의 목표</div><div class="card">${o.goals.map(g=>`<span class="chip">${g}</span>`).join("")}</div>
+ <div class="sec">핵심 어휘와 표현 · ${o.c.length}</div>
+ <div class="hint">행을 탭하면 뜻이 보여요 — 먼저 스스로 떠올려 보세요.</div>
+ <div class="card" style="padding:4px 16px">${vrows(lessonVocab(n,false))}</div>
+ <div class="sec">확장 어휘 · ${o.e.length}</div>
+ <div class="hint">⚠️ 보조 어휘입니다 — 본 교재의 핵심 어휘가 아니라 활동·워크북 관련 어휘예요.</div>
+ <div class="card acc" onclick="tgl(this)" style="cursor:pointer"><div style="display:flex;align-items:center"><b style="flex:1">확장 어휘 펼치기</b><span class="chev">›</span></div>
+  <div class="accbody" onclick="event.stopPropagation()">${vrows(lessonVocab(n,true).filter(v=>!v.core))}</div></div>
+ ${o.g.map((g,gi)=>`<div class="sec">문법 ${gi+1}</div><div class="card">
+   <div style="display:flex;align-items:center"><div class="gform" style="flex:1">${g.f}</div><button class="spk" onclick="spk(event,'${g.ex[0][0].replace(/'/g,"")}')">🔊</button></div>
+   <div class="sub" style="margin-top:6px">${g.m}</div>
+   ${g.ex.map(e=>`<div class="gex">${e[0]}<div class="vi">${e[1]}</div></div>`).join("")}
+   ${g.note?`<div class="gnote">💡 ${g.note}</div>`:""}
+ </div>`).join("")}
+ ${o.p?`<div class="sec">발음</div><div class="card"><b>${o.p[0]}</b><div class="sub" style="margin-top:4px">${o.p[1]}</div></div>`:""}
+ ${o.cul?`<div class="sec">문화</div><div class="card"><b>${o.cul[0]}</b><div class="sub" style="margin-top:4px">${o.cul[1]}</div></div>`:""}
+ <div class="sec">말하기 · 쓰기 과제</div>
+ <div class="card"><div class="stat"><span>🗣️ <b>말하기</b></span></div><div class="sub" style="padding:6px 2px">${o.ts}</div>
+ <div class="stat" style="border-top:1px solid var(--line)"><span>✍️ <b>쓰기</b></span></div><div class="sub" style="padding:6px 2px">${o.tw}</div></div>`}
+
+function vPractice(){const due=dueIds().length;const sl=studiedLessons();
+ const all=LS.flatMap(o=>lessonVocab(o.n,S.incExp));const cnt=[0,0,0,0,0];all.forEach(v=>cnt[mast(v.id)]++);
+ return `<div class="pagehead"><div style="flex:1"><h1>연습</h1><div class="sub">능동 회상 · 간격 반복(SRS)</div></div></div>
+ <div class="card"><b>오늘의 복습</b><div class="sub" style="margin:2px 0 12px">${due?due+"장 대기 중":"복습할 카드가 없어요"}</div>
+  <button class="btn primary" ${due?"":"disabled"} onclick="startFlash(null)">복습 시작</button>
+  <button class="btn mt" ${sl.length?"":"disabled"} onclick="startQuiz(null)">종합 퀴즈 (학습한 단원)</button></div>
+ <div class="sec">새 카드 학습</div>
+ <div class="card" style="padding:6px 16px">${LS.map(o=>{const nw=lessonVocab(o.n,S.incExp).filter(v=>!S.cards[v.id]).length;
+   return `<div class="lrow" onclick="startFlash(${o.n})"><div class="lnum">${o.n}과</div><div style="flex:1"><div class="ltit">${o.tp}</div><div class="lsub">${nw?`새 카드 ${nw}장`:"모두 학습함"}</div></div><span style="color:var(--muted)">›</span></div>`}).join("")}</div>
+ <div class="sec">습득 현황</div>
+ <div class="card">${MLBL.map((m,i)=>`<div class="stat"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:${m[1]}"></span>${m[0]}</span><span class="pill">${cnt[i]}</span></div>`).join("")}</div>
+ <div class="card"><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" ${S.incExp?"checked":""} onchange="toggleExp()" style="width:20px;height:20px;accent-color:var(--accent)"><span><b>확장 어휘 포함</b><div class="sub" style="font-size:13px">보조 어휘도 연습·퀴즈에 넣기</div></span></label></div>
+ <button class="btn" onclick="resetAll()" style="color:var(--red)">데이터 초기화</button>`}
+
+function vGrammar(){return `<div class="pagehead"><div style="flex:1"><h1>문법</h1><div class="sub">3B 핵심 문법 24개</div></div></div>
+ ${LS.map(o=>o.g.map((g,gi)=>`<div class="card acc" onclick="tgl(this)">
+  <div style="display:flex;align-items:center;gap:10px"><span class="pill">${o.n}과</span><div class="gform" style="flex:1;font-size:17px">${g.f}</div><span class="chev">›</span></div>
+  <div class="accbody" onclick="event.stopPropagation()"><div class="sub">${g.m}</div>
+   ${g.ex.map(e=>`<div class="gex">${e[0]} <button class="spk" style="width:30px;height:30px;font-size:12px;display:inline-flex;vertical-align:middle" onclick="spk(event,'${e[0].replace(/'/g,"")}')">🔊</button><div class="vi">${e[1]}</div></div>`).join("")}
+   ${g.note?`<div class="gnote">💡 ${g.note}</div>`:""}</div></div>`).join("")).join("")}`}
+
+function vFlash(){if(!sess)return vPractice();
+ if(sess.done){const tot=sess.cards.length;
+  return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>연습 완료</h1></div>
+  <div class="card center"><div style="font-size:40px">🌿</div><div class="bigxp">${tot}장</div><div class="sub">잘했어요! 꾸준함이 실력이에요.</div>
+  <div class="mt" style="display:flex;justify-content:center;gap:14px;font-size:14px">
+   <span>다시 ${sess.n[0]}</span><span>어려움 ${sess.n[1]}</span><span>좋음 ${sess.n[2]}</span><span>쉬움 ${sess.n[3]}</span></div></div>
+  <button class="btn primary" onclick="back()">완료</button>`}
+ const c=sess.cards[sess.i];const kv=c.dir==="kv";
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">✕</button><div style="flex:1"><div class="bar"><i style="width:${Math.round(sess.i/sess.cards.length*100)}%"></i></div></div><span class="pill">${sess.i+1}/${sess.cards.length}</span></div>
+ <div class="fcwrap"><div class="fc ${sess.flipped?"flipped":""}" onclick="flipCard()">
+  <div class="face"><div class="tag">${kv?"뜻 맞히기":"한국어로 말해 보기"} · ${c.l}과${c.core?"":" · 확장"}</div>
+   <div class="${kv?"fcbig":"fcsmall"}">${kv?c.ko:c.vi}</div>
+   ${kv?`<button class="spk mt" onclick="spk(event,'${c.ko.replace(/'/g,"")}')">🔊</button>`:""}
+   <div class="sub mt" style="font-size:13px">탭해서 확인</div></div>
+  <div class="face back"><div class="tag">정답</div>
+   <div class="fcbig" style="font-size:24px">${c.ko}</div>
+   <div class="sub mt" style="font-size:17px">${c.vi}</div>
+   <button class="spk mt" onclick="spk(event,'${c.ko.replace(/'/g,"")}')">🔊</button></div>
+ </div></div>
+ ${sess.flipped?`<div class="grades">
+  <button class="gbtn g0" onclick="doGrade(0)"><b>다시</b><span>${pv(c.id,0)}</span></button>
+  <button class="gbtn" onclick="doGrade(1)"><b>어려움</b><span>${pv(c.id,1)}</span></button>
+  <button class="gbtn" onclick="doGrade(2)"><b>좋음</b><span>${pv(c.id,2)}</span></button>
+  <button class="gbtn g3" onclick="doGrade(3)"><b>쉬움</b><span>${pv(c.id,3)}</span></button></div>
+ <p class="hint center mt">솔직하게 평가할수록 복습 간격이 정확해져요.</p>`
+ :`<button class="btn" onclick="flipCard()">카드 뒤집기</button>`}`}
+
+function vQuiz(){if(!qz)return vPractice();
+ if(qz.i>=qz.qs.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>퀴즈 결과</h1></div>
+  <div class="card center"><div class="bigxp">${qz.score}<span style="font-size:22px;color:var(--muted)">/${qz.qs.length}</span></div>
+  <div class="sub">${qz.score===qz.qs.length?"완벽해요! 🎉":qz.score>=qz.qs.length*0.7?"좋아요, 거의 다 왔어요.":"괜찮아요 — 틀린 부분을 아래에서 복습해요."}</div></div>
+  ${qz.wrong.length?`<div class="sec">다시 볼 항목</div>${qz.wrong.map(q=>{
+    if(q.t==="kv"||q.t==="vk")return `<div class="card"><b>${q.item.ko}</b><div class="sub">${q.item.vi}</div></div>`;
+    return `<div class="card"><b class="gform" style="font-size:17px">${q.g.f}</b><div class="sub">${q.g.m}</div><div class="gex">${q.g.ex[0][0]}<div class="vi">${q.g.ex[0][1]}</div></div></div>`}).join("")}`:""}
+  <button class="btn primary" onclick="back()">완료</button>`}
+ const q=qz.qs[qz.i];const answered=qz.ans!==null;
+ let prompt,opts,expl;
+ if(q.t==="kv"){prompt=`<div class="tag">뜻은 무엇일까요?</div><div class="fcbig" style="font-size:26px">${q.item.ko} <button class="spk" style="display:inline-flex;vertical-align:middle" onclick="spk(event,'${q.item.ko.replace(/'/g,"")}')">🔊</button></div>`;opts=q.opts.map(o=>o.vi);expl=`<b>${q.item.ko}</b> — ${q.item.vi}`}
+ else if(q.t==="vk"){prompt=`<div class="tag">한국어로는?</div><div class="fcsmall">${q.item.vi}</div>`;opts=q.opts.map(o=>o.ko);expl=`<b>${q.item.ko}</b> — ${q.item.vi}`}
+ else if(q.t==="gm"){prompt=`<div class="tag">이 문법의 의미는? (${q.g.ln}과)</div><div class="gform">${q.g.f}</div>`;opts=q.opts.map(o=>o.s);expl=`<b>${q.g.f}</b>: ${q.g.m}<br>예) ${q.g.ex[0][0]}`}
+ else{prompt=`<div class="tag">어떤 문법일까요?</div><div class="fcsmall">“${q.g.s}”</div>`;opts=q.opts.map(o=>o.f);expl=`<b>${q.g.f}</b>: ${q.g.m}<br>예) ${q.g.ex[0][0]}`}
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">✕</button><div style="flex:1"><div class="bar"><i style="width:${Math.round(qz.i/qz.qs.length*100)}%"></i></div></div><span class="pill">${qz.i+1}/${qz.qs.length}</span></div>
+ <div class="card center" style="padding:26px 18px">${prompt}</div>
+ ${opts.map((o,i)=>{let cl="opt";if(answered){if(i===q.a)cl+=" ok";else if(i===qz.ans)cl+=" no"}
+   return `<button class="${cl}" ${answered?"disabled":""} onclick="pick(${i})">${o}</button>`}).join("")}
+ ${answered?`<div class="expl">${qz.ans===q.a?"✅ 정답!":"❌ 아쉬워요."}<br>${expl}</div><button class="btn primary" onclick="nextQ()">${qz.i+1>=qz.qs.length?"결과 보기":"다음"}</button>`:""}`}
+
+function vCheck(){const done=CHECK.filter((_,i)=>S.chk[i]).length;
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">3B 시작 전 체크리스트</h1><div class="sub">${done}/${CHECK.length} 완료 · 1과 시작 전 확인해 보세요</div></div></div>
+ <div class="card">${CHECK.map((c,i)=>`<label class="chk"><input type="checkbox" ${S.chk[i]?"checked":""} onchange="setChk(${i},this.checked)"><span>${c}</span></label>`).join("")}</div>
+ <div class="card"><b>우선 점검 영역</b><div class="sub" style="margin-top:6px">말하기 유창성 · 능동 어휘 · 자막 없는 듣기 · 문단 구성 · 조사 사용 · 높임말</div></div>`}
+
+render();
+</script>
+</body>
+</html>
