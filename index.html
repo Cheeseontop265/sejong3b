@@ -361,9 +361,251 @@ q:[{q:"다음 주에 무엇을 해요?",o:["면접을 봐요","입사해요","�
 q:[{q:"지난달에 무엇을 했어요?",o:["서류를 제출했어요","비자를 받았어요","집을 구했어요"],a:0},{q:"글쓴이는 지금 기분이 어때요?",o:["걱정되지만 기대돼요","슬퍼요","화가 나요"],a:0}]}
 ];
 
+/* ============ EXTRA PASSAGES (dialogues + real-life texts) ============ */
+const READ2=[
+{l:1,ty:"dlg",t:"봉사 활동 이야기",s:[
+[["민지:","Minji"],["방학","kỳ nghỉ"],["때","khi"],["뭐","gì"],["했어요?","đã làm?"]],
+[["톰:","Tom"],["병원에서","ở bệnh viện"],["봉사","tình nguyện"],["활동을","hoạt động"],["했어요.","đã làm"]],
+[["민지:","Minji"],["무슨","gì"],["일을","việc"],["했어요?","đã làm?"]],
+[["톰:","Tom"],["할아버지,","ông,"],["할머니께","cho bà (kính)"],["책을","sách"],["읽어","đọc"],["드렸어요.","làm cho người trên"]],
+[["민지:","Minji"],["힘들지","mệt"],["않았어요?","không à?"]],
+[["톰:","Tom"],["힘들어도","dù mệt"],["정말","thật"],["보람을","ý nghĩa"],["느꼈어요.","đã cảm thấy"]]],
+q:[{q:"톰은 방학에 뭘 했어요?",o:["봉사 활동","아르바이트","여행"],a:0},{q:"톰은 기분이 어땠어요?",o:["보람을 느꼈어요","심심했어요","화가 났어요"],a:0}]},
+{l:2,ty:"dlg",t:"티켓 구했어요?",s:[
+[["민수:","Minsu"],["수진","Sujin"],["씨,","à,"],["표","vé"],["구했어요?","mua được chưa?"]],
+[["수진:","Sujin"],["네,","vâng,"],["어제","hôm qua"],["겨우","suýt soát mới"],["구했어요.","mua được"]],
+[["민수:","Minsu"],["쉽지","dễ"],["않았을","chắc không"],["텐데","chắc là (nền)"],["어떻게","làm sao"],["구했어요?","mua được?"]],
+[["수진:","Sujin"],["매진될까","sợ hết vé"],["봐","vì lo"],["아침","sáng"],["일찍","sớm"],["예매했어요.","đã đặt trước"]],
+[["민수:","Minsu"],["와,","oa,"],["부럽네요.","ghen tị quá"]],
+[["수진:","Sujin"],["다음","lần sau"],["공연에","buổi diễn"],["같이","cùng"],["가요!","đi nhé!"]]],
+q:[{q:"수진은 왜 일찍 예매했어요?",o:["매진될까 봐","돈이 없어서","민수가 부탁해서"],a:0},{q:"두 사람은 다음에 뭘 할 거예요?",o:["같이 공연에 가요","표를 팔아요","커버 댄스를 춰요"],a:0}]},
+{l:3,ty:"dlg",t:"떡볶이 먹어 봤어요?",s:[
+[["지훈:","Jihun"],["이","này"],["떡볶이","tteokbokki"],["좀","thử chút"],["드셔","ăn (kính)"],["보세요.","thử xem"]],
+[["마이:","Mai"],["와,","oa,"],["색깔이","màu"],["정말","thật"],["빨갛네요.","đỏ quá"]],
+[["지훈:","Jihun"],["많이","nhiều"],["안","không"],["매워요.","cay"],["맛있거든요.","ngon mà (lý do)"]],
+[["마이:","Mai"],["맛있는데","ngon nhưng"],["입안이","trong miệng"],["좀","hơi"],["얼얼해요.","tê rát"]],
+[["지훈:","Jihun"],["물","nước"],["드릴까요?","đưa cho nhé?"]],
+[["마이:","Mai"],["괜찮아요.","không sao"],["매운","cay"],["음식에","với món"],["익숙해지고","đang quen dần"],["있거든요.","đang (lý do)"]]],
+q:[{q:"마이는 떡볶이를 먹고 어땠어요?",o:["입안이 얼얼했어요","속이 편안했어요","너무 싱거웠어요"],a:0},{q:"지훈은 뭘 주려고 해요?",o:["물","우유","떡"],a:0}]},
+{l:4,ty:"txt",t:"레시피 카드 🍳",s:[
+[["간단한","đơn giản"],["달걀","trứng"],["볶음밥","cơm rang"]],
+[["재료:","nguyên liệu:"],["밥,","cơm,"],["달걀","trứng"],["두","hai"],["개,","quả,"],["채소,","rau,"],["소금","muối"]],
+[["채소를","rau"],["씻은","rửa"],["다음에","sau khi"],["작게","nhỏ"],["썰어","thái"],["놓으세요.","làm sẵn nhé"]],
+[["프라이팬에","trên chảo"],["달걀을","trứng"],["볶으세요.","xào nhé"]],
+[["밥과","cơm và"],["채소를","rau"],["넣고","cho vào và"],["잘","kỹ"],["섞으세요.","trộn nhé"]],
+[["마지막에","cuối cùng"],["소금을","muối"],["넣으면","nếu cho vào"],["끝!","xong!"]]],
+q:[{q:"달걀은 몇 개 필요해요?",o:["두 개","한 개","세 개"],a:0},{q:"소금은 언제 넣어요?",o:["마지막에","처음에","채소하고 같이"],a:0}]},
+{l:5,ty:"dlg",t:"왜 늦었어요?",s:[
+[["부장:","trưởng phòng"],["왜","sao"],["이렇게","thế này"],["늦었어요?","muộn vậy?"]],
+[["유진:","Yujin"],["죄송합니다.","xin lỗi ạ"],["늦잠을","ngủ nướng"],["자","ngủ"],["버렸어요.","mất rồi"]],
+[["부장:","trưởng phòng"],["알람을","báo thức"],["안","không"],["맞췄어요?","đặt à?"]],
+[["유진:","Yujin"],["맞췄는데","đặt rồi nhưng"],["못","không"],["듣고","nghe và"],["계속","tiếp tục"],["잤어요.","đã ngủ"]],
+[["부장:","trưởng phòng"],["요즘","dạo này"],["많이","nhiều"],["피곤한","mệt"],["모양이네요.","có vẻ nhỉ"]],
+[["유진:","Yujin"],["네,","vâng,"],["앞으로","từ nay"],["주의하겠습니다.","sẽ chú ý ạ"]]],
+q:[{q:"유진은 왜 늦었어요?",o:["늦잠을 자서","버스를 놓쳐서","길이 막혀서"],a:0},{q:"부장은 유진이 어떤 것 같다고 생각해요?",o:["피곤한 것 같다","게으른 것 같다","아픈 것 같다"],a:0}]},
+{l:6,ty:"txt",t:"카톡 화해 💬",s:[
+[["수진:","Sujin"],["어제는","hôm qua"],["제가","tôi"],["말이","lời nói"],["심했어요.","quá đáng"],["미안해요.","xin lỗi"]],
+[["민호:","Minho"],["아니에요.","không đâu"],["저도","tôi cũng"],["화를","giận"],["내서","vì nổi"],["미안해요.","xin lỗi"]],
+[["수진:","Sujin"],["제가","tôi"],["먼저","trước"],["사과할걸","lẽ ra nên xin lỗi"],["그랬어요.","đã (hối tiếc)"]],
+[["민호:","Minho"],["신경","bận tâm"],["쓰지","đừng"],["마세요.","nhé"]],
+[["수진:","Sujin"],["오해를","hiểu lầm"],["풀어서","vì giải tỏa"],["다행이에요.","may quá"]],
+[["민호:","Minho"],["커피","cà phê"],["마시면서","vừa uống vừa"],["이야기해요.","nói chuyện nhé"]]],
+q:[{q:"두 사람은 지금 어때요?",o:["화해했어요","아직 싸워요","처음 만났어요"],a:0},{q:"두 사람은 뭘 할 거예요?",o:["커피를 마셔요","여행을 가요","선물을 사요"],a:0}]},
+{l:7,ty:"txt",t:"모집 공고 🏃",s:[
+[["달리기","chạy bộ"],["동호회","CLB"],["회원","thành viên"],["모집!","tuyển!"]],
+[["매주","mỗi tuần"],["토요일","thứ Bảy"],["아침","sáng"],["7시에","lúc 7 giờ"],["한강","sông Hàn"],["공원에서","ở công viên"],["모여요.","tụ họp"]],
+[["같이","cùng"],["달린다거나","chẳng hạn chạy"],["마라톤","marathon"],["대회를","cuộc thi"],["준비해요.","chuẩn bị"]],
+[["초보자도","người mới cũng"],["환영해요.","hoan nghênh"]],
+[["회비는","hội phí"],["없어요.","không có"]],
+[["가입을","gia nhập"],["원하면","nếu muốn"],["연락","liên lạc"],["주세요.","hãy cho"]]],
+q:[{q:"언제 모여요?",o:["토요일 아침","일요일 저녁","매일 아침"],a:0},{q:"회비는 얼마예요?",o:["없어요","만 원","오만 원"],a:0}]},
+{l:8,ty:"dlg",t:"휴가 잘 다녀왔어요?",s:[
+[["수진:","Sujin"],["휴가","kỳ nghỉ"],["잘","tốt"],["다녀왔어요?","đi về chưa?"]],
+[["마크:","Mark"],["네,","vâng,"],["부산에","đến Busan"],["갔다","đi"],["왔어요.","về"]],
+[["수진:","Sujin"],["어땠어요?","thế nào?"]],
+[["마크:","Mark"],["바다도","biển cũng"],["보고","ngắm và"],["정말","thật"],["잘","tốt"],["쉬었어요.","đã nghỉ"]],
+[["수진:","Sujin"],["저는","tôi"],["일하느라고","vì bận làm"],["아무","chẳng"],["데도","nơi nào cũng"],["못","không"],["갔거든요.","đã đi (lý do)"]],
+[["마크:","Mark"],["다음","lần sau"],["휴가","kỳ nghỉ"],["때는","thì"],["꼭","nhất định"],["가","đi"],["보세요.","thử nhé"]]],
+q:[{q:"마크는 어디에 갔어요?",o:["부산","제주도","서울"],a:0},{q:"수진은 왜 못 갔어요?",o:["일하느라고","아파서","돈이 없어서"],a:0}]},
+{l:9,ty:"txt",t:"청첩장 💌",s:[
+[["결혼식에","đến lễ cưới"],["초대합니다.","xin mời"]],
+[["신랑","chú rể"],["김민수","Kim Minsu"],["·","·"],["신부","cô dâu"],["이수진","Lee Sujin"]],
+[["저희","chúng tôi (khiêm)"],["두","hai"],["사람이","người"],["결혼합니다.","kết hôn"]],
+[["10월","tháng 10"],["12일","ngày 12"],["토요일","thứ Bảy"],["낮","trưa"],["12시","12 giờ"]],
+[["서울","Seoul"],["하나","Hana"],["웨딩홀","wedding hall"],["3층","tầng 3"]],
+[["식사는","bữa ăn"],["피로연장에서","ở tiệc chiêu đãi"],["준비되어","được chuẩn bị"],["있습니다.","sẵn"]]],
+q:[{q:"결혼식은 언제예요?",o:["10월 12일","10월 21일","12월 10일"],a:0},{q:"어디에서 해요?",o:["하나 웨딩홀","호텔","교회"],a:0}]},
+{l:10,ty:"txt",t:"대보름 행사 안내 🌕",s:[
+[["정월","tháng Giêng"],["대보름","rằm lớn"],["행사","sự kiện"],["안내","hướng dẫn"]],
+[["토요일","thứ Bảy"],["저녁","tối"],["6시,","6 giờ,"],["시민","công dân"],["공원에서","ở công viên"]],
+[["달맞이","đón trăng"],["행사를","sự kiện"],["합니다.","tổ chức"]],
+[["보름달을","trăng rằm"],["보면서","vừa ngắm vừa"],["소원을","điều ước"],["빌어요.","cầu nguyện"]],
+[["오곡밥과","cơm ngũ cốc và"],["한과도","bánh truyền thống cũng"],["준비되어","chuẩn bị"],["있습니다.","sẵn"]],
+[["누구나","bất kỳ ai"],["무료로","miễn phí"],["참여할","tham gia"],["수","có thể"],["있습니다.","được"]]],
+q:[{q:"행사는 어디에서 해요?",o:["시민 공원","학교","시장"],a:0},{q:"무엇을 먹을 수 있어요?",o:["오곡밥과 한과","떡국과 송편","피자"],a:0}]},
+{l:11,ty:"txt",t:"채용 공고 📢",s:[
+[["신입","mới"],["사원","nhân viên"],["모집","tuyển"]],
+[["하나","Hana"],["여행사에서","ở công ty du lịch"],["신입","mới"],["사원을","nhân viên"],["찾습니다.","tìm kiếm"]],
+[["업무:","công việc:"],["여행","du lịch"],["상품","sản phẩm"],["안내","hướng dẫn"]],
+[["조건:","điều kiện:"],["외국어","ngoại ngữ"],["능력이","năng lực"],["좋은","tốt"],["분","vị (người)"]],
+[["경력이","kinh nghiệm"],["없어도","dù không có"],["지원할","ứng tuyển"],["수","có thể"],["있습니다.","được"]],
+[["이력서와","CV và"],["자기소개서를","thư tự giới thiệu"],["이메일로","qua email"],["제출해","nộp"],["주세요.","hãy"]]],
+q:[{q:"무슨 회사예요?",o:["여행사","식당","은행"],a:0},{q:"무엇을 제출해야 해요?",o:["이력서와 자기소개서","사진과 여권","졸업장"],a:0}]},
+{l:12,ty:"dlg",t:"유학 준비 중이에요",s:[
+[["유카:","Yuka"],["요즘","dạo này"],["뭐","gì"],["해요?","làm?"],["바빠","bận"],["보여요.","trông có vẻ"]],
+[["링:","Linh"],["유학","du học"],["서류를","giấy tờ"],["준비하는","chuẩn bị"],["중이에요.","đang trong quá trình"]],
+[["유카:","Yuka"],["와,","oa,"],["한국으로","sang Hàn"],["가요?","đi à?"]],
+[["링:","Linh"],["네,","vâng,"],["대학원에","cao học"],["지원하려고요.","định ứng tuyển"]],
+[["링:","Linh"],["서류가","giấy tờ"],["많기는","nhiều thì có nhiều"],["하지만","nhưng"],["재미있어요.","thú vị"]],
+[["유카:","Yuka"],["비자는","visa thì"],["받았어요?","nhận chưa?"]],
+[["링:","Linh"],["다음","tới"],["주에","tuần"],["비자","visa"],["면접을","phỏng vấn"],["봐요.","tham gia"]]],
+q:[{q:"링은 지금 뭘 해요?",o:["유학 서류 준비","여행 준비","시험 공부"],a:0},{q:"링은 다음 주에 뭘 해요?",o:["비자 면접","입학 시험","이사"],a:0}]}
+];
+READ2.forEach(p=>READ.push(p));
+/* ============ BATCH 3: diaries, emails, reviews ============ */
+const READ3=[
+{l:1,ty:"story",t:"새로운 계획 (일기)",s:[
+[["요즘","dạo này"],["저는","tôi"],["아르바이트를","việc làm thêm"],["하면서","vừa làm vừa"],["돈을","tiền"],["모으고","gom góp"],["있어요.","đang"]],
+[["내년","năm sau"],["여름에","mùa hè"],["한국으로","sang Hàn"],["어학연수를","du học tiếng"],["가고","đi"],["싶거든요.","muốn (lý do đấy)"]],
+[["아무리","dù mấy"],["피곤해도","dù mệt"],["저녁마다","mỗi tối"],["한국어를","tiếng Hàn"],["공부해요.","học"]],
+[["주말에는","cuối tuần"],["외국어","ngoại ngữ"],["시험도","kỳ thi cũng"],["준비해요.","chuẩn bị"]],
+[["시간을","thời gian"],["알차게","bổ ích"],["보내는","trải qua"],["것","việc"],["같아서","có vẻ nên"],["기분이","tâm trạng"],["좋아요.","tốt"]],
+[["제","của tôi"],["계획이","kế hoạch"],["꼭","nhất định"],["이루어지면","nếu thành"],["좋겠어요.","mong là"]]],
+q:[{q:"글쓴이는 왜 돈을 모아요?",o:["어학연수를 가려고","차를 사려고","집을 사려고"],a:0},{q:"저녁마다 뭘 해요?",o:["한국어 공부","아르바이트","운동"],a:0}]},
+{l:2,ty:"txt",t:"팬 미팅 후기",s:[
+[["어제","hôm qua"],["처음으로","lần đầu"],["팬","fan"],["미팅에","buổi gặp"],["갔다","đi"],["왔어요.","về"]],
+[["사인회","buổi ký tặng"],["표가","vé"],["매진될까","sợ hết"],["봐","vì lo"],["걱정을","lo lắng"],["많이","nhiều"],["했어요.","đã"]],
+[["다행히","may thay"],["표를","vé"],["구해서","mua được nên"],["가수를","ca sĩ"],["직접","trực tiếp"],["만났어요.","đã gặp"]],
+[["가수가","ca sĩ"],["제","của tôi"],["이름을","tên"],["불러","gọi"],["줬을","cho (đã)"],["때","khi"],["정말","thật"],["감동적이었어요.","cảm động"]],
+[["굿즈도","goods cũng"],["사고","mua và"],["사진도","ảnh cũng"],["많이","nhiều"],["찍었어요.","chụp"]],
+[["정말","thật"],["잊지","quên"],["못할","không thể"],["하루였어요.","là một ngày"]]],
+q:[{q:"글쓴이는 왜 걱정했어요?",o:["표가 매진될까 봐","비가 올까 봐","길이 막힐까 봐"],a:0},{q:"가장 감동적인 순간은?",o:["가수가 이름을 불러 줬을 때","굿즈를 샀을 때","사진을 찍었을 때"],a:0}]},
+{l:3,ty:"txt",t:"친구에게 보낸 이메일",s:[
+[["링","Linh"],["씨,","à,"],["잘","tốt"],["지내요?","sống khỏe chứ?"]],
+[["어제","hôm qua"],["한국","Hàn Quốc"],["식당에서","ở quán"],["삼계탕을","gà hầm sâm"],["먹어","ăn"],["봤어요.","thử"]],
+[["국물이","nước dùng"],["담백해서","vì thanh đạm"],["속이","bụng dạ"],["아주","rất"],["편안했어요.","dễ chịu"]],
+[["링","Linh"],["씨는","thì"],["매운","cay"],["음식을","món"],["잘","giỏi"],["못","không"],["먹지요?","ăn nhỉ?"]],
+[["그래서","vì vậy"],["이","này"],["음식을","món"],["꼭","nhất định"],["추천하고","giới thiệu"],["싶어요.","muốn"]],
+[["다음에","lần sau"],["같이","cùng"],["먹으러","đi ăn"],["가요!","đi nhé!"]]],
+q:[{q:"글쓴이는 뭘 먹었어요?",o:["삼계탕","김치찌개","떡볶이"],a:0},{q:"왜 추천해요?",o:["담백해서 속이 편안해서","매워서","싸서"],a:0}]},
+{l:4,ty:"txt",t:"라면 맛있게 끓이기",s:[
+[["오늘은","hôm nay"],["라면을","mì gói"],["맛있게","ngon"],["끓이는","nấu"],["방법을","cách"],["알려","cho biết"],["드릴게요.","sẽ (khiêm nhường)"]],
+[["먼저","trước tiên"],["냄비에","vào nồi"],["물을","nước"],["넣고","cho vào và"],["끓이세요.","đun sôi nhé"]],
+[["물이","nước"],["끓은","sôi"],["다음에","sau khi"],["면과","mì và"],["수프를","gói súp"],["넣으세요.","cho vào nhé"]],
+[["달걀을","trứng"],["넣으면","nếu cho"],["더","hơn"],["부드러워져요.","trở nên mềm"]],
+[["마지막으로","cuối cùng"],["파를","hành"],["썰어","thái"],["넣으세요.","cho vào nhé"]],
+[["간단하지만","đơn giản nhưng"],["정말","thật"],["맛있어요!","ngon!"]]],
+q:[{q:"면은 언제 넣어요?",o:["물이 끓은 다음에","처음에","달걀 다음에"],a:0},{q:"뭘 넣으면 부드러워져요?",o:["달걀","파","수프"],a:0}]},
+{l:5,ty:"story",t:"휴대폰을 잃어버린 날",s:[
+[["지난주에","tuần trước"],["카페에","ở quán cà phê"],["휴대폰을","điện thoại"],["놓고","để quên"],["왔어요.","rồi về"]],
+[["집에","nhà"],["도착하자마자","ngay khi đến"],["그","đó"],["사실을","sự thật"],["깨달았어요.","nhận ra"]],
+[["바로","ngay"],["카페로","đến quán"],["뛰어갔지만","chạy đến nhưng"],["문이","cửa"],["닫혀","đóng"],["버렸어요.","mất rồi"]],
+[["다행히","may thay"],["다음","hôm"],["날","sau"],["아침에","buổi sáng"],["휴대폰을","điện thoại"],["찾았어요.","tìm được"]],
+[["직원이","nhân viên"],["잘","cẩn thận"],["보관해","cất giữ"],["주셨거든요.","đã giúp (lý do)"]],
+[["앞으로는","từ nay"],["물건을","đồ đạc"],["잘","kỹ"],["확인해야겠어요.","phải kiểm tra"]]],
+q:[{q:"어디에 휴대폰을 놓고 왔어요?",o:["카페","버스","회사"],a:0},{q:"휴대폰을 언제 찾았어요?",o:["다음 날 아침","그날 저녁","일주일 후"],a:0}]},
+{l:6,ty:"story",t:"화해한 날 (일기)",s:[
+[["오늘","hôm nay"],["드디어","cuối cùng"],["수진","Sujin"],["씨하고","với"],["화해했어요.","đã làm hòa"]],
+[["지난주에","tuần trước"],["제가","tôi"],["말실수를","lỡ lời"],["해서","vì"],["사이가","quan hệ"],["안","không"],["좋았거든요.","tốt (lý do đấy)"]],
+[["사실","thực ra"],["그때","lúc đó"],["바로","ngay"],["사과할걸","lẽ ra nên xin lỗi"],["그랬어요.","(hối tiếc)"]],
+[["오늘","hôm nay"],["커피를","cà phê"],["마시면서","vừa uống vừa"],["오해를","hiểu lầm"],["풀었어요.","giải tỏa"]],
+[["수진","Sujin"],["씨가","(chủ ngữ)"],["웃으면서","vừa cười vừa"],["신경","bận tâm"],["쓰지","đừng"],["말라고","bảo đừng"],["했어요.","nói"]],
+[["마음이","lòng"],["정말","thật"],["가벼워졌어요.","nhẹ nhõm hẳn"]]],
+q:[{q:"두 사람은 왜 사이가 안 좋았어요?",o:["말실수 때문에","돈 때문에","약속 때문에"],a:0},{q:"오늘 뭘 하면서 화해했어요?",o:["커피를 마시면서","밥을 먹으면서","산책하면서"],a:0}]},
+{l:7,ty:"txt",t:"첫 모임 후기",s:[
+[["지난","vừa rồi"],["토요일에","thứ Bảy"],["등산","leo núi"],["동호회","CLB"],["첫","đầu tiên"],["모임에","buổi gặp"],["나갔어요.","tham dự"]],
+[["회원들이","các thành viên"],["정말","thật"],["친절하게","thân thiện"],["맞아","đón"],["줬어요.","cho"]],
+[["산에","núi"],["올라간다거나","chẳng hạn leo"],["같이","cùng"],["사진을","ảnh"],["찍으면서","vừa chụp vừa"],["친해졌어요.","thân nhau"]],
+[["내려온","xuống"],["다음에는","sau khi thì"],["맛있는","ngon"],["저녁도","bữa tối cũng"],["먹었어요.","ăn"]],
+[["새로운","mới"],["인맥도","quan hệ cũng"],["쌓고","xây và"],["정말","thật"],["즐거웠어요.","vui"]],
+[["다음","tới"],["모임이","buổi gặp"],["벌써","đã sớm"],["기대돼요.","mong chờ"]]],
+q:[{q:"어느 동호회 모임이었어요?",o:["등산","요리","영화"],a:0},{q:"모임 후 기분이 어때요?",o:["다음 모임이 기대돼요","피곤해요","후회해요"],a:0}]},
+{l:8,ty:"txt",t:"부산에서 보낸 엽서",s:[
+[["수진","Sujin"],["씨,","à,"],["저","tôi"],["지금","bây giờ"],["부산이에요!","đang ở Busan!"]],
+[["드디어","cuối cùng"],["휴가를","nghỉ phép"],["내서","xin được nên"],["여행을","du lịch"],["왔어요.","đến"]],
+[["여기는","ở đây"],["볼거리가","thứ để xem"],["많고","nhiều và"],["음식도","đồ ăn cũng"],["정말","thật"],["맛있어요.","ngon"]],
+[["어제는","hôm qua"],["바다를","biển"],["보면서","vừa ngắm vừa"],["여유를","thư thả"],["즐겼어요.","tận hưởng"]],
+[["수진","Sujin"],["씨","cho"],["기념품도","quà cũng"],["사","mua"],["놓았어요.","để sẵn rồi"]],
+[["다음","tới"],["주에","tuần"],["만나서","gặp rồi"],["이야기해요!","nói chuyện nhé!"]]],
+q:[{q:"글쓴이는 지금 어디에 있어요?",o:["부산","서울","제주도"],a:0},{q:"수진 씨를 위해 뭘 했어요?",o:["기념품을 사 놓았어요","사진을 보냈어요","전화했어요"],a:0}]},
+{l:9,ty:"story",t:"언니의 결혼 준비",s:[
+[["다음","tới"],["달에","tháng"],["우리","của tôi"],["언니가","chị gái"],["결혼해요.","kết hôn"]],
+[["요즘","dạo này"],["언니는","chị thì"],["결혼","cưới"],["준비로","vì chuẩn bị"],["아주","rất"],["바쁜","bận"],["모양이에요.","có vẻ"]],
+[["어제는","hôm qua"],["가족들과","với gia đình"],["청첩장을","thiệp cưới"],["만들었어요.","đã làm"]],
+[["언니는","chị"],["전통","truyền thống"],["혼례같이","như hôn lễ"],["특별한","đặc biệt"],["결혼식을","lễ cưới"],["하고","làm"],["싶어","muốn"],["해요.","(người khác muốn)"]],
+[["저는","tôi"],["결혼식에서","ở lễ cưới"],["축가를","bài hát mừng"],["부르기로","quyết định hát"],["했어요.","đã"]],
+[["벌써부터","từ giờ đã"],["떨리지만","run nhưng"],["정말","thật"],["기대돼요.","mong chờ"]]],
+q:[{q:"언니는 언제 결혼해요?",o:["다음 달","다음 주","내년"],a:0},{q:"글쓴이는 결혼식에서 뭘 해요?",o:["축가를 불러요","사회를 봐요","요리를 해요"],a:0}]},
+{l:10,ty:"txt",t:"추석 이야기",s:[
+[["추석은","Chuseok thì"],["음력","âm lịch"],["8월","tháng 8"],["15일로,","là ngày 15,"],["한국의","của Hàn"],["큰","lớn"],["명절이에요.","là lễ"]],
+[["한가위라고도","Hangawi cũng gọi"],["불러요.","được gọi"]],
+[["가족들이","gia đình"],["모여서","tụ họp và"],["차례를","lễ cúng"],["지내고","làm và"],["송편을","songpyeon"],["먹어요.","ăn"]],
+[["저는","tôi"],["작년에","năm ngoái"],["송편을","songpyeon"],["처음","lần đầu"],["만들어","làm"],["봤어요.","thử"]],
+[["만들기가","việc làm"],["어렵기는","khó thì có khó"],["했지만","nhưng"],["정말","thật"],["재미있었어요.","thú vị"]],
+[["밤에는","ban đêm"],["보름달을","trăng rằm"],["보면서","vừa ngắm vừa"],["소원을","điều ước"],["빌었어요.","cầu"]]],
+q:[{q:"추석에 무엇을 먹어요?",o:["송편","떡국","오곡밥"],a:0},{q:"밤에는 뭘 했어요?",o:["소원을 빌었어요","윷놀이를 했어요","불꽃놀이를 봤어요"],a:0}]},
+{l:11,ty:"story",t:"합격 문자를 받은 날",s:[
+[["오늘","hôm nay"],["드디어","cuối cùng"],["합격","đỗ"],["문자를","tin nhắn"],["받았어요!","nhận được!"]],
+[["지난달에","tháng trước"],["입사","vào công ty"],["지원서를","đơn"],["내고","nộp và"],["면접을","phỏng vấn"],["봤거든요.","đã (lý do đấy)"]],
+[["면접","phỏng vấn"],["준비를","chuẩn bị"],["열심히","chăm chỉ"],["해","làm"],["둔","để sẵn"],["덕분인","nhờ vào"],["것","điều"],["같아요.","có lẽ"]],
+[["다음","tới"],["주부터","từ tuần"],["신입","mới"],["사원으로","với tư cách NV"],["출근해요.","đi làm"]],
+[["앞으로","từ nay"],["경력을","kinh nghiệm"],["조금씩","từng chút"],["쌓아","tích lũy"],["갈","tiếp tục"],["거예요.","sẽ"]],
+[["오늘은","hôm nay"],["가족들과","với gia đình"],["축하","chúc mừng"],["파티를","tiệc"],["할","làm"],["거예요!","sẽ!"]]],
+q:[{q:"오늘 무슨 문자를 받았어요?",o:["합격 문자","불합격 문자","광고 문자"],a:0},{q:"다음 주부터 뭘 해요?",o:["출근해요","면접을 봐요","여행을 가요"],a:0}]},
+{l:12,ty:"txt",t:"기숙사 문의 이메일",s:[
+[["안녕하세요.","xin chào"],["저는","tôi"],["내년에","năm sau"],["입학할","sẽ nhập học"],["예정인","dự định"],["링입니다.","là Linh"]],
+[["기숙사","ký túc xá"],["신청에","về đăng ký"],["대해","về"],["문의드리고","hỏi (khiêm nhường)"],["싶습니다.","muốn"]],
+[["저는","tôi"],["지금","bây giờ"],["유학","du học"],["서류를","giấy tờ"],["준비하는","chuẩn bị"],["중입니다.","đang trong quá trình"]],
+[["기숙사","KTX"],["신청은","đăng ký thì"],["언제부터","từ khi nào"],["할","làm"],["수","có thể"],["있습니까?","được ạ?"]],
+[["장학금을","học bổng"],["받는","nhận"],["학생도","sinh viên cũng"],["신청할","đăng ký"],["수","có thể"],["있는지","hay không"],["궁금합니다.","thắc mắc"]],
+[["답변","hồi âm"],["기다리겠습니다.","xin chờ"],["감사합니다.","cảm ơn"]]],
+q:[{q:"링은 무엇을 문의해요?",o:["기숙사 신청","등록금","비자"],a:0},{q:"링은 지금 뭘 해요?",o:["유학 서류를 준비해요","한국에 살아요","일해요"],a:0}]}
+];
+READ3.forEach(p=>READ.push(p));
+/* grammar-hunt targets: exact token strings per passage index */
+const HUNT={
+0:[{f:"-아/어 드리다",a:["드리고","드렸어요."]},{f:"-아도/어도",a:["피곤해도"]}],
+1:[{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]},{f:"-아/어 놓다",a:["놓았어요."]}],
+2:[{f:"-거든요",a:["먹거든요."]}],
+3:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 놓다",a:["놓았어요."]}],
+4:[{f:"-자마자",a:["일어나자마자"]},{f:"-아/어 버리다",a:["버렸어요."]}],
+5:[{f:"-(으)ㄹ걸 그랬다",a:["참을걸","그랬어요."]}],
+6:[{f:"-는다거나/ㄴ다거나",a:["탐방한다거나"]}],
+7:[{f:"-느라고",a:["일하느라고"]},{f:"-거든요",a:["갔거든요."]}],
+8:[{f:"같이 / 같은",a:["영화같이"]}],
+9:[{f:"-아/어 드리다",a:["드리고"]}],
+10:[{f:"-아/어 두다",a:["두었어요."]},{f:"-아/어 가다",a:["가고"]}],
+11:[{f:"-는 중이다",a:["중이에요."]},{f:"-기는 하다",a:["걱정되기는"]}],
+12:[{f:"-아/어 드리다",a:["드렸어요."]},{f:"-아도/어도",a:["힘들어도"]}],
+13:[{f:"-(으)ㄹ 텐데",a:["않았을","텐데"]},{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]}],
+14:[{f:"-거든요",a:["맛있거든요.","있거든요."]}],
+15:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 놓다",a:["놓으세요."]}],
+16:[{f:"-아/어 버리다",a:["버렸어요."]},{f:"-는/(으)ㄴ 모양이다",a:["모양이네요."]}],
+17:[{f:"-(으)ㄹ걸 그랬다",a:["사과할걸","그랬어요."]}],
+18:[{f:"-는다거나/ㄴ다거나",a:["달린다거나"]}],
+19:[{f:"-느라고",a:["일하느라고"]},{f:"-거든요",a:["갔거든요."]}],
+20:[],
+21:[],
+22:[{f:"-아도/어도",a:["없어도"]}],
+23:[{f:"-는 중이다",a:["중이에요."]},{f:"-기는 하다",a:["많기는"]}]
+};
+Object.assign(HUNT,{
+24:[{f:"-거든요",a:["싶거든요."]},{f:"-아도/어도",a:["피곤해도"]}],
+25:[{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]}],
+26:[],
+27:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 드리다",a:["드릴게요."]}],
+28:[{f:"-자마자",a:["도착하자마자"]},{f:"-아/어 버리다",a:["버렸어요."]}],
+29:[{f:"-(으)ㄹ걸 그랬다",a:["사과할걸","그랬어요."]},{f:"-거든요",a:["좋았거든요."]}],
+30:[{f:"-는다거나/ㄴ다거나",a:["올라간다거나"]},{f:"-(으)ㄴ 다음에",a:["다음에는"]}],
+31:[{f:"-아/어 놓다",a:["놓았어요."]}],
+32:[{f:"-는/(으)ㄴ 모양이다",a:["모양이에요."]},{f:"같이 / 같은",a:["혼례같이"]}],
+33:[{f:"-기는 하다",a:["어렵기는"]}],
+34:[{f:"-아/어 두다",a:["둔"]},{f:"-아/어 가다",a:["갈"]}],
+35:[{f:"-는 중이다",a:["중입니다."]}]
+});
 /* ============ STATE / SRS ============ */
 const KEY="hana3b_v3";
-let S=load();
+let S=load(); S.myReads=S.myReads||[];S.myReads.forEach(p=>READ.push(p));
 function load(){for(const k of[KEY,"hana3b_v2","hana3b_v1"]){try{const d=JSON.parse(localStorage.getItem(k));if(d&&d.cards)return Object.assign({read:{},akey:"",amodel:"claude-sonnet-4-5"},d)}catch(e){}}
  return{cards:{},xp:0,streak:0,lastDay:null,last:null,incExp:false,chk:{},read:{},akey:"",amodel:"claude-sonnet-4-5"}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S))}
@@ -491,9 +733,13 @@ function startQuiz(l){let pool=lessonVocab(l,S.incExp),gs=LS[l-1].g.map(g=>({...
 function pick(oi){if(qz.ans!==null)return;const q=qz.qs[qz.i];qz.ans=oi;if(oi===q.a){qz.score++;S.xp+=10}else qz.wrong.push(q);touchStreak();save();render()}
 function nextQ(){qz.i++;qz.ans=null;render();window.scrollTo(0,0)}
 
-/* ============ READING ============ */
-let G=null,rp=null;
-function openPassage(pi){rp={pi,ans:{}};G=null;go("passage",pi)}
+/* ============ READING (5 activities) ============ */
+let G=null,rp=null,rf="all";
+function openPassage(pi){rp={pi,act:"read",ans:{},hFound:{},hi:0,cl:null,ci:0,cAns:null,cok:0,ord:null};G=null;go("passage",pi)}
+function setAct(a){rp.act=a;G=null;
+ if(a==="cloze"&&!rp.cl){rp.cl=mkCloze(READ[rp.pi]);rp.ci=0;rp.cAns=null;rp.cok=0}
+ if(a==="order"&&!rp.ord){const n=READ[rp.pi].s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null}}
+ render()}
 function showG(pi,si,ti){const t=READ[pi].s[si][ti];G={w:t[0].replace(/[.,!?]$/,""),g:t[1]};renderGloss()}
 function hideG(){G=null;renderGloss()}
 function renderGloss(){const el=document.getElementById("glossbar");
@@ -502,11 +748,45 @@ function renderGloss(){const el=document.getElementById("glossbar");
  el.innerHTML=`<div class="in"><b>${G.w}</b><span class="g">${G.g}</span>
  <button class="spk" style="background:rgba(255,255,255,.15);border:none;color:#fff" onclick="speak('${G.w}')">🔊</button>
  <button style="background:none;border:none;color:#fff;font-size:17px;padding:4px" onclick="hideG()">✕</button></div>`}
+function tapTok(pi,si,ti){const t=READ[pi].s[si][ti];
+ if(rp.act==="hunt"){const hs=HUNT[pi]||[];const h=hs[rp.hi];if(!h){showG(pi,si,ti);return}
+  if(h.a.includes(t[0])){rp.hFound[si+"-"+ti]=1;rp.hi++;
+   const gm=GALL.find(x=>x.f===h.f);G={w:t[0],g:"✅ "+h.f+(gm?" — "+gm.s:"")};
+   if(rp.hi>=hs.length){S.read[pi]=S.read[pi]||{};if(!S.read[pi].hunt){S.read[pi].hunt=1;S.xp+=8;touchStreak()}save()}
+   renderGloss();render()}
+  else{G={w:t[0].replace(/[.,!?]$/,""),g:t[1]+" · ❌ 여기가 아니에요, 다시 찾아보세요"};renderGloss()}
+  return}
+ showG(pi,si,ti)}
 function rqPick(qi,oi){if(rp.ans[qi]!==undefined)return;rp.ans[qi]=oi;const P=READ[rp.pi];
  if(oi===P.q[qi].a)S.xp+=8;
  if(Object.keys(rp.ans).length===P.q.length){const sc2=P.q.filter((q,i)=>rp.ans[i]===q.a).length;
-  if(!S.read[rp.pi]||!S.read[rp.pi].done){S.xp+=10;S.read[rp.pi]={done:true,score:sc2}}else S.read[rp.pi].score=Math.max(S.read[rp.pi].score,sc2)}
+  S.read[rp.pi]=S.read[rp.pi]||{};
+  if(!S.read[rp.pi].done){S.xp+=10;S.read[rp.pi].done=true;S.read[rp.pi].score=sc2}
+  else S.read[rp.pi].score=Math.max(S.read[rp.pi].score||0,sc2)}
  touchStreak();save();render()}
+function mkCloze(P){const cand=[];
+ P.s.forEach((sn,si)=>sn.forEach((t,ti)=>{const w=t[0].replace(/[.,!?:…]/g,"");
+  if(w.length>=2&&!t[0].endsWith(":")&&!/\d/.test(w))cand.push({si,ti,w:t[0]})}));
+ const picks=shuffle([...cand]).slice(0,4).sort((a,b)=>a.si-b.si||a.ti-b.ti);
+ return picks.map(p=>({...p,opts:shuffle([p.w,...shuffle(cand.filter(c=>c.w!==p.w)).slice(0,3).map(c=>c.w)])}))}
+function clPick(oi){if(rp.cAns!==null)return;const c=rp.cl[rp.ci];rp.cAns=oi;
+ if(c.opts[oi]===c.w){rp.cok++;S.xp+=3}touchStreak();save();render()}
+function clNext(){rp.ci++;rp.cAns=null;
+ if(rp.ci>=rp.cl.length){S.read[rp.pi]=S.read[rp.pi]||{};
+  if(!S.read[rp.pi].cloze&&rp.cok>=3){S.read[rp.pi].cloze=1;S.xp+=6;save()}}
+ render()}
+function odTap(k){if(rp.ord.state)return;rp.ord.chosen.push(k);render()}
+function odUndo(i){if(rp.ord.state)return;rp.ord.chosen.splice(i,1);render()}
+function odCheck(){const ok=rp.ord.chosen.every((v,i)=>v===i);rp.ord.state=ok?"ok":"no";
+ if(ok){S.read[rp.pi]=S.read[rp.pi]||{};if(!S.read[rp.pi].order){S.read[rp.pi].order=1;S.xp+=10}}
+ touchStreak();save();render()}
+function odRetry(){const n=READ[rp.pi].s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null};render()}
+function sentTxt(P,si){return P.s[si].map(t=>t[0]).join(" ")}
+function linesHTML(pi){const P=READ[pi];
+ return P.s.map((sn,si)=>`<div class="rline">
+  <button class="spk" style="width:30px;height:30px;font-size:12px" onclick="spk(event,'${sentTxt(P,si).replace(/'/g,"")}')">🔊</button>
+  <div class="rtxt">${sn.map((t,ti)=>{const found=rp.hFound[si+"-"+ti];const sp=t[0].endsWith(":");
+   return `<span class="tok" style="${found?"background:var(--okbg);color:var(--green);font-weight:700":""}${sp?";font-weight:700;color:#8a6a4f":""}" onclick="tapTok(${pi},${si},${ti})">${t[0]}</span>`}).join(" ")}</div></div>`).join("")}
 
 /* ============ AI WRITING — targeted 3B trainer ============ */
 const WGUIDE={
@@ -552,7 +832,23 @@ function delNote(i){S.notes.splice(i,1);save();render()}
 function startNoteScram(){const ns=(S.notes||[]).filter(x=>x.ko.split(" ").length>=3);
  if(!ns.length){alert("노트에 문장이 아직 없어요. 첨삭 결과에서 ➕로 저장해 보세요.");return}
  sc={list:shuffle([...ns]).slice(0,6).map(x=>({l:"복습",ko:x.ko,vi:x.why,words:x.ko.split(" ")})),i:0,chosen:[],state:null,listen:false,spokenIdx:-1};go("scram")}
-function newMissions(){wr.msFor=null;wInit(route.arg||0);render()}
+function newMissions(){wr.msFor=null;wInit(route.arg||0);render()} 
+/* ============ AI PASSAGE GENERATOR ============ */
+let rg={busy:false,err:null};
+async function genRead(){if(rg.busy)return;
+ if(!S.akey){alert("먼저 ✍️ 쓰기의 ⚙️에서 API 키를 설정해 주세요");return}
+ const l=parseInt(document.getElementById("rgl").value)||1;const o=LS[l-1];
+ rg.busy=true;rg.err=null;render();
+ const voc=shuffle(o.c.map(x=>x[0])).slice(0,6).join(", ");
+ try{const p=await callClaude(
+`Bạn tạo bài đọc tiếng Hàn trình độ TOPIK 3 cho app học. Trả về DUY NHẤT JSON hợp lệ: {"t":"tiêu đề ngắn tiếng Hàn","ty":"story","s":[[["토큰","nghĩa Việt 1-3 từ"],["토큰","nghĩa"]],[...câu 2...]],"q":[{"q":"câu hỏi tiếng Hàn","o":["đáp án đúng","sai","sai"],"a":0},{"q":"...","o":["...","...","..."],"a":0}]}. Quy tắc: 5-7 câu; mỗi câu = mảng token tách ĐÚNG theo dấu cách của câu gốc, GIỮ dấu chấm/phẩy dính vào token; mỗi token kèm nghĩa Việt cực ngắn; thể loại ngẫu nhiên (nhật ký / email / 후기 / đối thoại ngắn — nếu đối thoại thì token đầu mỗi câu là "이름:"); văn tự nhiên như người Hàn viết.`,
+`Bài ${l}과 — chủ đề: ${o.tp}. Nên dùng ngữ pháp: ${o.g.map(g=>g.f).join(", ")}. Nên dùng vài từ vựng: ${voc}. Hãy sáng tạo tình huống MỚI, đừng lặp lại chủ đề quá hiển nhiên.`,1600);
+  if(!p.s||!p.s.length||!p.q||!p.q.length)throw new Error("생성 결과가 올바르지 않아요. 한 번 더 시도해 주세요.");
+  p.l=l;p.ty=p.ty||"story";p.t="✨ "+(p.t||"AI 지문");
+  p.q=p.q.slice(0,2).map(q=>{const corr=q.o[q.a||0];const o2=shuffle([...q.o]);return{q:q.q,o:o2,a:o2.indexOf(corr)}});
+  S.myReads.push(p);READ.push(p);save();
+  rg.busy=false;openPassage(READ.length-1)}
+ catch(e){rg.err=e.message;rg.busy=false;render()}}
 async function aiGym(n){if(wr.busy)return;
  if(wr.ms.some(m=>m.text.trim().length<4)){wr.err="세 문장을 모두 써 주세요 — 짧아도 괜찮아요.";render();return}
  wr.busy=true;wr.err=null;wr.gym=null;render();
@@ -612,7 +908,7 @@ function vHome(){const due=dueIds().length;const last=S.last?LS[S.last-1]:null;
   <div style="flex:1"><div class="sub">연속</div><div class="serif" style="font-size:24px">🔥 ${S.streak}일</div></div>
   <div style="flex:1"><div class="sub">XP</div><div class="serif" style="font-size:24px">${S.xp}</div></div>
   <div style="flex:1"><div class="sub">어휘</div><div class="serif" style="font-size:24px">${mastered}<span style="font-size:14px;color:var(--muted)">/${total}</span></div></div>
-  <div style="flex:1"><div class="sub">읽기</div><div class="serif" style="font-size:24px">${rdone}<span style="font-size:14px;color:var(--muted)">/12</span></div></div></div></div>
+  <div style="flex:1"><div class="sub">읽기</div><div class="serif" style="font-size:24px">${rdone}<span style="font-size:14px;color:var(--muted)">/${READ.length}</span></div></div></div></div>
  <div class="card"><div style="font-weight:700">오늘의 복습</div>
   <div class="sub" style="margin:2px 0 12px">${due?due+"장이 기다리고 있어요.":"복습 완료! 읽기나 문장 만들기로 이어 가세요 🌿"}</div>
   ${due?`<button class="btn primary" onclick="startSmart(null)">스마트 복습 · ${due}장</button>`:`<button class="btn ghost" onclick="setTab('read')">📖 읽기 하러 가기</button>`}
@@ -668,7 +964,7 @@ function vPractice(){const due=dueIds().length;
  <button class="modecard" onclick="startContrast()"><span class="micon">⚖️</span><span style="flex:1"><span class="mtit">문법 대결</span><br><span class="msub">헷갈리는 문법 2개 중 선택 + 이유</span></span></button>
  <button class="modecard" onclick="startMatch(null)"><span class="micon">🃏</span><span style="flex:1"><span class="mtit">짝 맞추기</span><br><span class="msub">단어–뜻 매칭 워밍업</span></span></button>
  <button class="modecard" onclick="go('write',0)"><span class="micon">🎯</span><span style="flex:1"><span class="mtit">쓰기 훈련</span><br><span class="msub">약한 어휘+문법으로 문장 만들기 · AI 검증</span></span></button>
- <button class="modecard" onclick="go('notes')"><span class="micon">📒</span><span style="flex:1"><span class="mtit">오답 노트</span><br><span class="msub">내가 틀린 문장 다시 조립하기</span></span></button>${(S.notes||[]).length?`<span></span>`:""}
+ <button class="modecard" onclick="go('notes')"><span class="micon">📒</span><span style="flex:1"><span class="mtit">오답 노트</span><br><span class="msub">내가 틀린 문장 다시 조립하기</span></span></button>
  <div class="sec">새 카드 학습</div>
  <div class="card" style="padding:6px 16px">${LS.map(o=>{const nw=lessonVocab(o.n,S.incExp).filter(v=>!S.cards[v.id]).length;
   return `<div class="lrow" onclick="startSmart(${o.n})"><div class="lnum">${o.n}과</div><div style="flex:1"><div class="ltit">${o.tp}</div><div class="lsub">${nw?"새 카드 "+nw+"장":"모두 학습함"}</div></div><span style="color:var(--muted)">›</span></div>`}).join("")}</div>
@@ -690,24 +986,63 @@ function vGrammar(){return `<div class="pagehead"><div style="flex:1"><h1>문법
   ${g.ex.map(e=>`<div class="gex">${e[0]}<div class="vi">${e[1]}</div></div>`).join("")}
   ${g.note?`<div class="gnote">💡 ${g.note}</div>`:""}</div></div>`).join("")).join("")}`}
 
-function vRead(){return `<div class="pagehead"><div style="flex:1"><h1>읽기</h1><div class="sub">단어를 탭하면 뜻이 보여요 · i+1 수준</div></div></div>
- ${READ.map((P,pi)=>{const st=S.read[pi];return `<button class="modecard" onclick="openPassage(${pi})">
-  <span class="micon">${st&&st.done?"✅":"📖"}</span>
-  <span style="flex:1"><span class="mtit">${P.t}</span><br><span class="msub">${P.l}과 · ${LS[P.l-1].tpv}${st&&st.done?" · 이해 "+st.score+"/"+P.q.length:""}</span></span>
+function vRead(){const types=[["all","전체"],["story","이야기"],["dlg","대화"],["txt","실용문"]];
+ return `<div class="pagehead"><div style="flex:1"><h1>읽기</h1><div class="sub">${READ.length}개 지문 · 계속 늘어나요</div></div></div>
+ <div class="card"><b>✨ AI 새 지문 만들기</b><div class="sub" style="margin-top:2px">원하는 과를 골라 완전히 새로운 글을 받아요 · API 1회 · 내 서재에 영구 저장</div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+  <select id="rgl" class="tinput" style="flex:1;margin:0;min-height:44px">${LS.map(o=>`<option value="${o.n}">${o.n}과 · ${o.tp}</option>`).join("")}</select>
+  <button class="btn sm primary" style="width:auto;padding:0 18px;flex:none" ${rg.busy?"disabled":""} onclick="genRead()">${rg.busy?"생성 중...":"생성"}</button></div>
+  ${rg.busy?`<div class="center mt"><div class="spin"></div></div>`:""}
+  ${rg.err?`<div class="expl bad mt">⚠️ ${rg.err}</div>`:""}</div>
+ <div style="display:flex;gap:7px;margin-bottom:12px">${types.map(t=>`<button class="btn sm ${rf===t[0]?"primary":""}" style="width:auto;flex:1" onclick="rf='${t[0]}';render()">${t[1]}</button>`).join("")}</div>
+ ${READ.map((P,pi)=>({P,pi})).filter(x=>rf==="all"||(x.P.ty||"story")===rf).map(({P,pi})=>{
+  const st=S.read[pi]||{};const total=(HUNT[pi]&&HUNT[pi].length)?4:3;
+  const done=(st.done?1:0)+(st.hunt?1:0)+(st.cloze?1:0)+(st.order?1:0);
+  const icon=(P.ty||"story")==="dlg"?"💬":(P.ty==="txt"?"📋":"📖");
+  return `<button class="modecard" onclick="openPassage(${pi})">
+  <span class="micon">${done>=total?"✅":icon}</span>
+  <span style="flex:1"><span class="mtit">${P.t}</span><br><span class="msub">${P.l}과 · ${LS[P.l-1].tpv} · 활동 ${done}/${total}</span></span>
   <span style="color:var(--muted)">›</span></button>`}).join("")}`}
 
-function vPassage(pi){const P=READ[pi];if(!rp||rp.pi!==pi)rp={pi,ans:{}};
- const full=P.s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ");
- return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">${P.t}</h1><div class="sub">${P.l}과 · 모르는 단어를 탭해 보세요</div></div>
- <button class="spk" onclick="spk(event,'${full}')">🔊</button></div>
- <div class="card">${P.s.map((sn,si)=>`<div class="rline">
-  <button class="spk" style="width:30px;height:30px;font-size:12px" onclick="spk(event,'${sn.map(t=>t[0]).join(" ")}')">🔊</button>
-  <div class="rtxt">${sn.map((t,ti)=>`<span class="tok" onclick="showG(${pi},${si},${ti})">${t[0]}</span>`).join(" ")}</div></div>`).join("")}</div>
- <div class="sec">이해 확인</div>
- ${P.q.map((q,qi)=>{const an=rp.ans[qi];return `<div class="card"><b style="font-size:15px">${qi+1}. ${q.q}</b><div class="mt">
+function vPassage(pi){const P=READ[pi];if(!rp||rp.pi!==pi)rp={pi,act:"read",ans:{},hFound:{},hi:0,cl:null,ci:0,cAns:null,cok:0,ord:null};
+ const hs=HUNT[pi]||[];const st=S.read[pi]||{};
+ const acts=[["read","📖 읽기",1],["q","❓ 문제",st.done],...(hs.length?[["hunt","🔍 문법",st.hunt]]:[]),["cloze","🧩 빈칸",st.cloze],["order","↕ 순서",st.order]];
+ let body="";
+ if(rp.act==="read"){body=`<div class="hint">모르는 단어를 탭해 보세요 — 베트남어 뜻이 나와요.</div><div class="card">${linesHTML(pi)}</div>
+  <button class="btn ghost" onclick="setAct('q')">다 읽었어요 → 문제 풀기</button>`}
+ else if(rp.act==="q"){body=P.q.map((q,qi)=>{const an=rp.ans[qi];
+  return `<div class="card"><b style="font-size:15px">${qi+1}. ${q.q}</b><div class="mt">
   ${q.o.map((o,oi)=>{let cl="opt";if(an!==undefined){if(oi===q.a)cl+=" ok";else if(oi===an)cl+=" no"}
-   return `<button class="${cl}" ${an!==undefined?"disabled":""} onclick="rqPick(${qi},${oi})">${o}</button>`}).join("")}</div></div>`}).join("")}
- ${Object.keys(rp.ans).length===P.q.length?`<div class="card center"><div style="font-size:30px">🌿</div><b>읽기 완료!</b><div class="sub">이해 ${P.q.filter((q,i)=>rp.ans[i]===q.a).length}/${P.q.length}</div></div>`:""}`}
+   return `<button class="${cl}" ${an!==undefined?"disabled":""} onclick="rqPick(${qi},${oi})">${o}</button>`}).join("")}</div></div>`}).join("")
+  +(Object.keys(rp.ans).length===P.q.length?`<div class="card center"><div style="font-size:28px">🌿</div><b>이해 ${P.q.filter((q,i)=>rp.ans[i]===q.a).length}/${P.q.length}</b></div>`:"")}
+ else if(rp.act==="hunt"){const h=hs[rp.hi];
+  body=h?`<div class="card" style="background:var(--accent-soft)"><b>🔍 ${rp.hi+1}/${hs.length}</b> — 이 글에서 <b class="gform" style="font-size:17px">${h.f}</b> 문법이 쓰인 단어를 찾아 탭하세요.
+   <div class="sub" style="margin-top:4px">${(GALL.find(x=>x.f===h.f)||{}).s||""}</div></div><div class="card">${linesHTML(pi)}</div>`
+  :`<div class="card center" style="background:var(--okbg)"><div style="font-size:28px">🎉</div><b>문법 찾기 완료! +8 XP</b><div class="sub">초록색 단어 = 찾은 문법</div></div><div class="card">${linesHTML(pi)}</div>`}
+ else if(rp.act==="cloze"){if(!rp.cl){rp.cl=mkCloze(P)}
+  if(rp.ci>=rp.cl.length){body=`<div class="card center"><div style="font-size:28px">🧩</div><b>빈칸 ${rp.cok}/${rp.cl.length}</b><div class="sub">문맥 속에서 어휘를 기억하는 연습이에요.</div></div>
+   <button class="btn" onclick="rp.cl=mkCloze(READ[rp.pi]);rp.ci=0;rp.cAns=null;rp.cok=0;render()">🔁 새 빈칸으로 다시</button>`}
+  else{const c=rp.cl[rp.ci];const sn=P.s[c.si];
+   body=`<div class="hint">빈칸 ${rp.ci+1}/${rp.cl.length} — 문맥에 맞는 말을 고르세요. 다른 단어는 탭하면 뜻이 나와요.</div>
+   <div class="card"><div class="rtxt" style="font-size:18px;line-height:2">${sn.map((t,ti)=>ti===c.ti
+    ?`<span style="background:var(--accent-soft);border-radius:8px;padding:2px 12px;color:var(--accent);font-weight:700">____</span>`
+    :`<span class="tok" onclick="tapTok(${pi},${c.si},${ti})">${t[0]}</span>`).join(" ")}</div></div>
+   ${c.opts.map((o,oi)=>{let cl2="opt";if(rp.cAns!==null){if(o===c.w)cl2+=" ok";else if(oi===rp.cAns)cl2+=" no"}
+    return `<button class="${cl2}" ${rp.cAns!==null?"disabled":""} onclick="clPick(${oi})">${o}</button>`}).join("")}
+   ${rp.cAns!==null?`<button class="btn primary" onclick="clNext()">${rp.ci+1>=rp.cl.length?"결과 보기":"다음"}</button>`:""}`}}
+ else{if(!rp.ord){const n=P.s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null}}
+  const rem=rp.ord.perm.filter(k=>!rp.ord.chosen.includes(k));
+  body=`<div class="hint">문장을 원래 순서대로 탭하세요 — 글의 흐름을 읽는 연습이에요.</div>
+  <div class="ansline">${rp.ord.chosen.map((k,i)=>`<button class="opt" style="margin-bottom:6px;font-size:14px" onclick="odUndo(${i})"><b>${i+1}.</b> ${sentTxt(P,k)}</button>`).join("")||`<span class="hint">첫 문장부터 골라 보세요</span>`}</div>
+  ${rem.map(k=>`<button class="opt" style="font-size:14px" onclick="odTap(${k})">${sentTxt(P,k)}</button>`).join("")}
+  ${rp.ord.state==="ok"?`<div class="expl good">✅ 완벽한 순서예요! +10 XP</div><button class="btn primary" onclick="setAct('read')">📖 다시 읽기</button>`
+  :rp.ord.state==="no"?`<div class="expl bad">❌ 순서가 달라요. 연결어(그리고·그런데·그래서·마지막으로)를 힌트로 보세요.</div><button class="btn primary" onclick="odRetry()">다시 도전</button>`
+  :`<button class="btn primary mt" ${rp.ord.chosen.length===P.s.length?"":"disabled"} onclick="odCheck()">확인</button>`}`}
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:19px">${P.t}</h1><div class="sub">${P.l}과 · ${(P.ty||"story")==="dlg"?"대화":P.ty==="txt"?"실용문":"이야기"}</div></div>
+ <button class="spk" onclick="spk(event,'${P.s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ").replace(/'/g,"")}')">🔊</button></div>
+ <div style="display:flex;gap:7px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px">
+ ${acts.map(a=>`<button class="btn sm ${rp.act===a[0]?"primary":""}" style="width:auto;flex:none;padding:0 13px" onclick="setAct('${a[0]}')">${a[1]}${a[2]?" ✓":""}</button>`).join("")}</div>
+ ${body}`}
 
 function vDict(){if(!dt)return vPractice();
  if(dt.i>=dt.list.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>받아쓰기 완료</h1></div>
