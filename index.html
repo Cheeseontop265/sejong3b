@@ -508,28 +508,82 @@ function rqPick(qi,oi){if(rp.ans[qi]!==undefined)return;rp.ans[qi]=oi;const P=RE
   if(!S.read[rp.pi]||!S.read[rp.pi].done){S.xp+=10;S.read[rp.pi]={done:true,score:sc2}}else S.read[rp.pi].score=Math.max(S.read[rp.pi].score,sc2)}
  touchStreak();save();render()}
 
-/* ============ AI WRITING (Claude API) ============ */
-let wr={text:"",busy:false,res:null,err:null,setup:false};
+/* ============ AI WRITING — targeted 3B trainer ============ */
+const WGUIDE={
+0:{qs:[["오늘 뭐 했어요?","Hôm nay bạn làm gì?"],["가장 기억에 남는 일이 뭐예요?","Việc gì đáng nhớ nhất?"],["그때 기분이 어땠어요?","Lúc đó bạn thấy sao?"],["내일은 뭘 하고 싶어요?","Mai muốn làm gì?"]],st:["오늘은 ...","사실은 ... 거든요","내일은 ... 려고 해요"]},
+1:{qs:[["무슨 재능이 있어요?","Bạn có tài năng gì?"],["누구를 도울 수 있어요?","Giúp được ai?"],["언제, 어디에서 하고 싶어요?","Khi nào, ở đâu?"],["기분이 어떨 것 같아요?","Sẽ thấy sao?"]],st:["저는 ...을 잘해요","...을 도와 드리고 싶어요","아무리 바빠도 ..."]},
+2:{qs:[["무슨 공연에 갔어요?","Đi xem gì?"],["누구하고 갔어요?","Với ai?"],["가장 인상적인 순간은요?","Ấn tượng nhất?"],["또 가고 싶어요? 왜요?","Muốn đi nữa? Vì sao?"]],st:["지난 주말에 콘서트에 갔다 왔어요","표가 매진될까 봐 ...","공연이 정말 ..."]},
+3:{qs:[["제일 좋아하는 음식이 뭐예요?","Món thích nhất?"],["맛이 어때요?","Vị thế nào?"],["언제 처음 먹었어요?","Ăn lần đầu khi nào?"],["왜 추천해요?","Sao giới thiệu?"]],st:["제가 제일 좋아하는 음식은 ...이에요","자주 먹거든요","먹으면 속이 ..."]},
+4:{qs:[["무슨 요리예요?","Món gì?"],["재료는요?","Nguyên liệu?"],["첫 단계는요?","Bước đầu?"],["그다음에는요?","Sau đó?"]],st:["오늘은 ...을 소개할게요","먼저 씻은 다음에 ...","마지막으로 ..."]},
+5:{qs:[["언제 실수했어요?","Khi nào?"],["무슨 실수였어요?","Sai gì?"],["왜 그랬어요?","Vì sao?"],["그다음에 어떻게 됐어요?","Rồi sao?"]],st:["어제 큰 실수를 해 버렸어요","딴생각을 하다가 ...","앞으로는 ..."]},
+6:{qs:[["누가 왜 사과했어요?","Ai xin lỗi, vì sao?"],["기분이 어땠어요?","Bạn thấy sao?"],["용서하고 싶어요?","Muốn tha thứ?"],["앞으로는요?","Sau này?"]],st:["메시지 잘 받았어요","일부러 그런 것도 아닌데요, 뭘","우리 오해를 풀고 ..."]},
+7:{qs:[["무슨 동호회예요?","CLB gì?"],["무슨 활동을 해요?","Hoạt động gì?"],["얼마나 자주 모여요?","Bao lâu gặp?"],["회비는요?","Hội phí?"]],st:["저희는 ... 동호회입니다","한 달에 두 번 모여요","...을 한다거나 ..."]},
+8:{qs:[["어디로 가고 싶어요?","Đi đâu?"],["왜 그곳이에요?","Sao chọn?"],["뭘 할 거예요?","Làm gì?"],["숙소는요?","Ở đâu?"]],st:["이번 휴가에는 ...에 가려고 해요","일하느라고 오랫동안 ...","자연 경관이 ..."]},
+9:{qs:[["여러분 나라 결혼식은 어때요?","Cưới nước bạn?"],["한국하고 뭐가 달라요?","Khác gì?"],["뭐가 비슷해요?","Giống gì?"],["어떤 결혼식을 원해요?","Muốn kiểu nào?"]],st:["우리 나라 결혼식은 ...","한국에서는 ...는 모양이에요","영화같이 아름다운 ..."]},
+10:{qs:[["베트남 대표 명절은요?","Lễ VN?"],["무슨 음식을 먹어요?","Ăn gì?"],["설날하고 비슷한 점은요?","Giống Seollal?"],["다른 점은요?","Khác gì?"]],st:["베트남에서는 설날에 ...","한국 사람들은 떡국을 먹어요","두 나라 모두 ..."]},
+11:{qs:[["어떤 회사를 원해요?","Công ty nào?"],["왜요?","Vì sao?"],["지금 뭘 준비해요?","Chuẩn bị gì?"],["5년 후에는요?","5 năm sau?"]],st:["...에 입사하고 싶어요","미리 준비해 두고 있어요","경력을 쌓아 가면서 ..."]},
+12:{qs:[["왜 한국 유학이에요?","Sao du học Hàn?"],["뭘 공부하고 싶어요?","Học gì?"],["지금 뭘 준비 중이에요?","Đang chuẩn bị gì?"],["한국에서 뭘 해 보고 싶어요?","Muốn trải nghiệm gì?"]],st:["...을 공부하러 가고 싶어요","서류를 준비하는 중이에요","걱정되기는 하지만 ..."]}
+};
+let wr={mode:"gym",msFor:null,ms:[],gym:null,ans:["","","",""],text:"",busy:false,res:null,err:null,setup:false,idea:null,ideaBusy:false,saved:{}};
+function wInit(n){if(wr.msFor===n)return;wr.msFor=n;wr.ms=pickMissions(n);wr.gym=null;wr.res=null;wr.err=null;wr.idea=null;wr.ans=["","","",""];wr.text="";wr.saved={}}
+function pickMissions(n){let gs,pool;
+ if(n){gs=LS[n-1].g;pool=lessonVocab(n,false)}
+ else{const sl=studiedLessons();gs=sl.length?shuffle(GALL.filter(g=>sl.includes(g.ln))).slice(0,2):LS[0].g;
+  pool=sl.length?sl.flatMap(l=>lessonVocab(l,false)):lessonVocab(1,false)}
+ if(gs.length<2)gs=[gs[0],gs[0]];
+ pool=[...pool].sort((a,b)=>mast(a.id)-mast(b.id));
+ return shuffle(pool.slice(0,9)).slice(0,3).map((v,i)=>({g:gs[i%2],v,text:""}))}
 function saveKey(){const k=document.getElementById("akey").value.trim(),m=document.getElementById("amodel").value.trim();
  if(!k){alert("API 키를 입력해 주세요");return}S.akey=k;if(m)S.amodel=m;save();wr.setup=false;render()}
+function usedV(w,t){return w.split(" ").some(tok=>{const st=tok.replace(/다$/,"").slice(0,2);return st.length>=2&&t.includes(st)})}
+function wStarter(s){wr.text=(wr.text?wr.text+" ":"")+s;render()}
+function wDraft(){const t=wr.ans.filter(a=>a.trim()).join(" ");
+ if(!t){wr.err="질문에 한두 개라도 답해 보세요 🙂";render();return}
+ wr.text=wr.text?wr.text+" "+t:t;wr.mode="free";wr.err=null;render()}
+async function callClaude(sys,user,maxTok){
+ const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+  headers:{"content-type":"application/json","x-api-key":S.akey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+  body:JSON.stringify({model:S.amodel||"claude-sonnet-4-5",max_tokens:maxTok,system:sys,messages:[{role:"user",content:user}]})});
+ if(!r.ok)throw new Error(r.status===401?"API 키가 올바르지 않아요. ⚙️에서 확인해 주세요.":"오류 "+r.status);
+ const d=await r.json();S.api=(S.api||0)+1;save();
+ const m=d.content[0].text.match(/\{[\s\S]*\}/);return JSON.parse(m[0])}
+function addNote(ko,why,key){S.notes=S.notes||[];S.notes.unshift({ko,why:why||"",ts:Date.now()});wr.saved[key]=1;save();render()}
+function delNote(i){S.notes.splice(i,1);save();render()}
+function startNoteScram(){const ns=(S.notes||[]).filter(x=>x.ko.split(" ").length>=3);
+ if(!ns.length){alert("노트에 문장이 아직 없어요. 첨삭 결과에서 ➕로 저장해 보세요.");return}
+ sc={list:shuffle([...ns]).slice(0,6).map(x=>({l:"복습",ko:x.ko,vi:x.why,words:x.ko.split(" ")})),i:0,chosen:[],state:null,listen:false,spokenIdx:-1};go("scram")}
+function newMissions(){wr.msFor=null;wInit(route.arg||0);render()}
+async function aiGym(n){if(wr.busy)return;
+ if(wr.ms.some(m=>m.text.trim().length<4)){wr.err="세 문장을 모두 써 주세요 — 짧아도 괜찮아요.";render();return}
+ wr.busy=true;wr.err=null;wr.gym=null;render();
+ const list=wr.ms.map((m,i)=>`${i+1}) 목표 문법: ${m.g.f} (${m.g.s}) · 목표 어휘: ${m.v.ko} (${m.v.vi}) · 학생 문장: ${m.text.trim()}`).join("\n");
+ try{const res=await callClaude(
+`Bạn là giáo viên tiếng Hàn Sejong 3B. Học viên viết 3 câu; mỗi câu PHẢI dùng đúng 1 mẫu ngữ pháp + 1 từ vựng mục tiêu đã cho. Đánh giá TỪNG câu. status: "ok"=dùng đúng cả hai, câu tự nhiên; "fix"=có dùng nhưng sai (đưa "fixed"); "off"=không thực sự dùng mục tiêu hoặc câu hỏng (đưa "model" dùng đúng cả 2 mục tiêu). Trả về DUY NHẤT JSON: {"items":[{"status":"ok|fix|off","fixed":"...","model":"...","why":"giải thích ngắn tiếng Việt"}],"tip":"1 mẹo chung ngắn"} — items theo đúng thứ tự.`,list,900);
+  wr.gym=res;
+  (res.items||[]).forEach((it,i)=>{const m=wr.ms[i];if(!m)return;
+   if(it.status==="ok"){grade(m.v.id,2);S.xp+=8}else if(it.status==="fix")grade(m.v.id,1);else grade(m.v.id,0)});
+  touchStreak();save()}
+ catch(e){wr.err=e.message}
+ wr.busy=false;render()}
+async function aiIdeas(n){if(wr.ideaBusy)return;wr.ideaBusy=true;wr.err=null;render();
+ const o=n?LS[n-1]:null;
+ try{wr.idea=await callClaude(
+ `Trả về DUY NHẤT JSON: {"angle":"1 góc viết cá nhân hóa thú vị (tiếng Việt)","opening":"1 câu mở đầu tiếng Hàn TOPIK 3","extra":["câu hỏi gợi ý (tiếng Việt)","câu hỏi gợi ý (tiếng Việt)"]}`,
+ `Đề: ${o?o.tw:"tự do 3-5 câu"} · Chủ đề: ${o?o.tp:"tự do"} · Ngữ pháp: ${o?o.g.map(g=>g.f).join(", "):"3B"}`,350)}
+ catch(e){wr.err=e.message}
+ wr.ideaBusy=false;render()}
 async function aiCheck(n){if(wr.busy)return;const txt=wr.text.trim();
- if(txt.length<10){wr.err="조금 더 길게 써 보세요 (한두 문장 이상). Viết dài hơn một chút nhé.";render();return}
+ if(txt.length<10){wr.err="조금 더 길게 써 보세요.";render();return}
  wr.busy=true;wr.err=null;wr.res=null;render();
  const o=n?LS[n-1]:null;
- const SYS=`Bạn là giáo viên tiếng Hàn cho học viên Việt Nam trình độ Sejong 3B (TOPIK 3). Nhiệm vụ: chữa bài viết tiếng Hàn theo kiểu diff. Nguyên tắc: (1) chỉ ra CHÍNH XÁC chỗ sai, (2) giải thích NGẮN GỌN vì sao bằng tiếng Việt, (3) không sửa quá tay — câu chấp nhận được thì khen trước rồi gợi ý cách tự nhiên hơn, (4) kiểm tra 4 lớp: ngữ pháp / từ vựng-collocation / nhất quán 존댓말-반말 / độ tự nhiên. Trả về DUY NHẤT một JSON hợp lệ, không markdown, không văn bản ngoài JSON, theo schema: {"overall":"1-2 câu nhận xét tổng quan tiếng Việt, giọng ấm áp","corrections":[{"orig":"cụm gốc sai","fix":"cụm đã sửa","why":"lý do ngắn tiếng Việt","type":"문법|어휘|높임말|자연스러움"}],"natural":"toàn bộ bài viết phiên bản tự nhiên như người bản xứ","used_grammar":["các mẫu ngữ pháp 3B học viên đã dùng đúng"],"tip":"1 mẹo ngắn tiếng Việt để dùng ngữ pháp bài này tốt hơn"}. Nếu bài hoàn hảo, corrections để mảng rỗng và khen thật lòng.`;
- const USER=`Bài học: ${o?o.n+"과 — "+o.tp+" ("+o.tpv+")":"Chủ đề tự do"}
-Ngữ pháp mục tiêu: ${o?o.g.map(g=>g.f).join(", "):"bất kỳ ngữ pháp 3B"}
-Đề bài: ${o?o.tw:"Viết tự do 3-5 câu bằng tiếng Hàn."}
-Bài viết của học viên:
-${txt}`;
- try{
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
-   headers:{"content-type":"application/json","x-api-key":S.akey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-   body:JSON.stringify({model:S.amodel||"claude-sonnet-4-5",max_tokens:1500,system:SYS,messages:[{role:"user",content:USER}]})});
-  if(!r.ok){const t=await r.text();throw new Error(r.status===401?"API 키가 올바르지 않아요. ⚙️ 설정에서 확인해 주세요.":"오류 "+r.status+": "+t.slice(0,140))}
-  const d=await r.json();const raw=d.content[0].text;const m=raw.match(/\{[\s\S]*\}/);
-  wr.res=JSON.parse(m[0]);S.xp+=15;touchStreak();save();
- }catch(e){wr.err=e.message||"네트워크 오류가 발생했어요. 인터넷 연결을 확인해 주세요."}
+ const tg=[...(o?o.g.map(g=>g.f):[]),...wr.ms.map(m=>m.v.ko)];
+ try{wr.res=await callClaude(
+ `Giáo viên tiếng Hàn Sejong 3B. Chữa bài kiểu diff (4 lớp: ngữ pháp/từ vựng/존댓말/tự nhiên), không sửa quá tay. Đồng thời KIỂM TRA các mục tiêu 3B được giao. Trả về DUY NHẤT JSON: {"overall":"1-2 câu tiếng Việt ấm áp","targets":[{"item":"mục tiêu","status":"ok|fix|miss","comment":"ngắn tiếng Việt"}],"corrections":[{"orig":"...","fix":"...","why":"ngắn tiếng Việt","type":"문법|어휘|높임말|자연스러움"}],"natural":"toàn bài tự nhiên","tip":"1 mẹo ngắn"}`,
+ `Mục tiêu 3B: ${tg.join(" · ")}
+Đề: ${o?o.tw:"tự do"}
+Bài viết:
+${txt}`,1500);S.xp+=15;touchStreak();save()}
+ catch(e){wr.err=e.message}
  wr.busy=false;render()}
 
 /* ============ VIEWS ============ */
@@ -542,7 +596,7 @@ function render(){
  ["home","lessons","practice","read","grammar"].forEach(t=>{const b=document.getElementById("tb-"+t);
   const on=route.v===t||(route.v==="lesson"&&t==="lessons")||(route.v==="passage"&&t==="read")||(["smart","scram","contrast","match","quiz","dict","write"].includes(route.v)&&t==="practice");
   if(b)b.classList.toggle("on",on)});
- const V={home:vHome,lessons:vLessons,lesson:()=>vLesson(route.arg),practice:vPractice,grammar:vGrammar,smart:vSmart,scram:vScram,contrast:vContrast,match:vMatch,quiz:vQuiz,check:vCheck,read:vRead,passage:()=>vPassage(route.arg),dict:vDict,write:()=>vWrite(route.arg)};
+ const V={home:vHome,lessons:vLessons,lesson:()=>vLesson(route.arg),practice:vPractice,grammar:vGrammar,smart:vSmart,scram:vScram,contrast:vContrast,match:vMatch,quiz:vQuiz,check:vCheck,read:vRead,passage:()=>vPassage(route.arg),dict:vDict,write:()=>vWrite(route.arg),notes:vNotes};
  document.getElementById("app").innerHTML=(V[route.v]||vHome)();
  window.scrollTo(0,0);renderGloss();
  if(route.v==="smart")armTimer();
@@ -613,7 +667,8 @@ function vPractice(){const due=dueIds().length;
  <button class="modecard" onclick="startDict()"><span class="micon">⌨️</span><span style="flex:1"><span class="mtit">받아쓰기</span><br><span class="msub">듣고 직접 타이핑 — 최고 난도 듣기 훈련</span></span></button>
  <button class="modecard" onclick="startContrast()"><span class="micon">⚖️</span><span style="flex:1"><span class="mtit">문법 대결</span><br><span class="msub">헷갈리는 문법 2개 중 선택 + 이유</span></span></button>
  <button class="modecard" onclick="startMatch(null)"><span class="micon">🃏</span><span style="flex:1"><span class="mtit">짝 맞추기</span><br><span class="msub">단어–뜻 매칭 워밍업</span></span></button>
- <button class="modecard" onclick="go('write',0)"><span class="micon">✍️</span><span style="flex:1"><span class="mtit">AI 쓰기 첨삭</span><br><span class="msub">자유 주제 — Claude가 diff 방식으로 교정</span></span></button>
+ <button class="modecard" onclick="go('write',0)"><span class="micon">🎯</span><span style="flex:1"><span class="mtit">쓰기 훈련</span><br><span class="msub">약한 어휘+문법으로 문장 만들기 · AI 검증</span></span></button>
+ <button class="modecard" onclick="go('notes')"><span class="micon">📒</span><span style="flex:1"><span class="mtit">오답 노트</span><br><span class="msub">내가 틀린 문장 다시 조립하기</span></span></button>${(S.notes||[]).length?`<span></span>`:""}
  <div class="sec">새 카드 학습</div>
  <div class="card" style="padding:6px 16px">${LS.map(o=>{const nw=lessonVocab(o.n,S.incExp).filter(v=>!S.cards[v.id]).length;
   return `<div class="lrow" onclick="startSmart(${o.n})"><div class="lnum">${o.n}과</div><div style="flex:1"><div class="ltit">${o.tp}</div><div class="lsub">${nw?"새 카드 "+nw+"장":"모두 학습함"}</div></div><span style="color:var(--muted)">›</span></div>`}).join("")}</div>
@@ -671,34 +726,72 @@ function vDict(){if(!dt)return vPractice();
  <button class="btn primary" onclick="dtCheck()">확인</button>
  <p class="hint center mt">띄어쓰기·마침표는 채점에서 무시돼요.</p>`}`}
 
-function vWrite(n){const o=n?LS[n-1]:null;
- if(!S.akey||wr.setup){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">AI 첨삭 설정</h1><div class="sub">Claude API 키가 필요해요 (1회 설정)</div></div></div>
-  <div class="card"><b>1.</b> console.anthropic.com → API Keys → Create Key<br><b>2.</b> 키를 아래에 붙여넣기<br>
+function vWrite(n){const o=n?LS[n-1]:null;const g=WGUIDE[n||0];wInit(n||0);
+ if(!S.akey||wr.setup){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">AI 설정</h1></div></div>
+  <div class="card"><b>1.</b> console.anthropic.com → API Keys<br><b>2.</b> 붙여넣기
   <input class="tinput mt" type="password" id="akey" placeholder="sk-ant-..." value="${S.akey}">
-  <div class="sub" style="margin-bottom:6px">모델 (기본값 권장)</div>
-  <input class="tinput" type="text" id="amodel" value="${S.amodel}">
+  <div class="sub" style="margin-bottom:6px">모델</div><input class="tinput" type="text" id="amodel" value="${S.amodel}">
   <button class="btn primary" onclick="saveKey()">저장</button>
-  <div class="hint mt">🔒 키는 이 기기에만 저장되고, 백업 파일에는 포함되지 않아요. 첨삭 1회 비용은 보통 몇 원 수준이에요.</div></div>`}
- return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">✍️ AI 쓰기 첨삭</h1><div class="sub">${o?o.n+"과 · "+o.tp:"자유 주제"}</div></div>
- <button class="spk" onclick="wr.setup=true;render()">⚙️</button></div>
- <div class="card"><b>과제</b><div class="sub" style="margin-top:4px">${o?o.tw:"오늘 배운 문법으로 3~5문장을 자유롭게 써 보세요."}</div>
- ${o?`<div class="mt">${o.g.map(g=>`<span class="chip">${g.f}</span>`).join("")}</div><div class="hint">이 문법을 써 보면 AI가 확인해 줘요.</div>`:""}</div>
- <textarea class="tinput" placeholder="여기에 한국어로 써 보세요..." oninput="wr.text=this.value">${wr.text}</textarea>
- <button class="btn primary" ${wr.busy?"disabled":""} onclick="aiCheck(${n||0})">${wr.busy?"첨삭 중...":"첨삭 받기"}</button>
+  <div class="hint mt">🔒 이 기기에만 저장 · 백업 미포함</div></div>`}
+ const stBox=(tgt)=>tgt==="ok"?["✅","good"]:tgt==="fix"?["⚠️","bad"]:["❌","bad"];
+ let body="";
+ if(wr.mode==="gym"){
+  body=`<div class="hint mt">약한 어휘 3개가 자동으로 뽑혔어요. 각 문장에 <b>문법+어휘</b>를 모두 넣어 보세요.</div>
+  ${wr.ms.map((m,i)=>{const it=wr.gym&&wr.gym.items&&wr.gym.items[i];
+   return `<div class="card" style="padding:13px 14px">
+   <span class="pill">문법</span> <b class="gform" style="font-size:15.5px">${m.g.f}</b> <span class="sub" style="font-size:12.5px">${m.g.s}</span><br>
+   <span class="pill" style="margin-top:4px">어휘</span> <b>${m.v.ko}</b> <span class="sub" style="font-size:12.5px">${m.v.vi}</span>
+   ${it?`<div class="expl ${stBox(it.status)[1]}" style="margin-top:10px">${stBox(it.status)[0]} ${it.status==="ok"?"완벽해요!":""}
+    ${it.status==="fix"?`<div style="margin-top:4px"><span class="worig">${m.text}</span><br>→ <span class="wfix">${it.fixed||""}</span></div>`:""}
+    ${it.status==="off"?`<div style="margin-top:4px">모범: <b>${it.model||""}</b></div>`:""}
+    <div class="sub" style="margin-top:5px">💡 ${it.why||""}</div>
+    ${(it.status!=="ok"&&(it.fixed||it.model))?`<button class="btn sm ghost mt" ${wr.saved["g"+i]?"disabled":""} onclick="addNote('${(it.fixed||it.model||"").replace(/'/g,"")}','${(it.why||"").replace(/'/g,"")}','g${i}')">${wr.saved["g"+i]?"✓ 노트에 저장됨":"➕ 오답 노트에 저장"}</button>`:""}</div>`
+   :`<input class="tinput" style="margin:10px 0 0" type="text" placeholder="이 문법과 어휘로 한 문장..." value="${m.text.replace(/"/g,"")}" oninput="wr.ms[${i}].text=this.value" onchange="render()">
+   <div class="hint" style="margin:6px 0 0">${usedV(m.v.ko,m.text)?"✅ 어휘 포함됨":"어휘가 아직 안 보여요"} · 문법은 AI가 확인해요</div>`}</div>`}).join("")}
+  ${wr.gym?`${wr.gym.tip?`<div class="card gnote">💡 ${wr.gym.tip}</div>`:""}
+   <div class="row2"><button class="btn" onclick="newMissions()">🔁 새 미션 (무료)</button><button class="btn primary" onclick="back()">완료</button></div>`
+  :`<button class="btn primary mt" ${wr.busy?"disabled":""} onclick="aiGym(${n||0})">${wr.busy?"확인 중...":"3문장 한 번에 확인 · API 1회"}</button>
+  <p class="hint center mt">정답이면 그 어휘의 복습 간격이 자동으로 늘어나요.</p>`}`}
+ else if(wr.mode==="guide"){
+  body=`${g.qs.map((q,i)=>`<div class="card" style="padding:12px 14px"><b style="font-size:15px">${i+1}. ${q[0]}</b><div class="sub" style="font-size:12.5px;margin-bottom:8px">${q[1]}</div>
+   <input class="tinput" style="margin:0" type="text" placeholder="한 문장으로..." value="${(wr.ans[i]||"").replace(/"/g,"")}" oninput="wr.ans[${i}]=this.value"></div>`).join("")}
+  <button class="btn sm ghost mt" ${wr.ideaBusy?"disabled":""} onclick="aiIdeas(${n||0})">${wr.ideaBusy?"생각 중...":"💡 AI 아이디어 · API 1회"}</button>
+  ${wr.idea?`<div class="card mt" style="background:var(--accent-soft)"><b>💡 ${wr.idea.angle||""}</b><div class="gex">${wr.idea.opening||""}</div>${(wr.idea.extra||[]).map(e=>`<div class="sub mt" style="font-size:13px">· ${e}</div>`).join("")}</div>`:""}
+  <button class="btn primary mt" onclick="wDraft()">📝 초안 만들기 (무료)</button>`}
+ else{body=`<div class="mt">${g.st.map(s=>`<button class="wchip" style="font-size:13.5px" onclick="wStarter('${s}')">💬 ${s}</button>`).join("")}</div>
+  <div class="mt">${wr.ms.map(m=>`<span class="chip" style="${usedV(m.v.ko,wr.text)?"background:var(--okbg);color:var(--green)":""}">${usedV(m.v.ko,wr.text)?"✅ ":""}${m.v.ko}</span>`).join("")}${o?o.g.map(x=>`<span class="chip">${x.f}</span>`).join(""):""}</div>
+  <textarea class="tinput mt" placeholder="여기에 한국어로 써 보세요..." oninput="wr.text=this.value" onchange="render()">${wr.text}</textarea>
+  <div class="hint">문장 ${wr.text.split(/[.!?]/).filter(x=>x.trim()).length}개 · 3문장 이상 권장</div>
+  <button class="btn primary" ${wr.busy?"disabled":""} onclick="aiCheck(${n||0})">${wr.busy?"첨삭 중...":"첨삭 받기 · API 1회"}</button>`}
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">✍️ 쓰기 훈련</h1><div class="sub">${o?o.n+"과 · "+o.tp:"자유"} · API ${S.api||0}회</div></div>
+ <button class="spk" onclick="go('notes')">📒</button><button class="spk" onclick="wr.setup=true;render()">⚙️</button></div>
+ <div class="card"><b>과제</b><div class="sub" style="margin-top:4px">${o?o.tw:"3~5문장 자유 쓰기"}</div></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+  <button class="btn sm ${wr.mode==="gym"?"primary":""}" onclick="wr.mode='gym';render()">🎯 문장 훈련</button>
+  <button class="btn sm ${wr.mode==="guide"?"primary":""}" onclick="wr.mode='guide';render()">🧭 가이드</button>
+  <button class="btn sm ${wr.mode==="free"?"primary":""}" onclick="wr.mode='free';render()">✏️ 자유</button></div>
+ ${body}
  ${wr.busy?`<div class="card center mt"><div class="spin"></div><div class="sub mt">선생님이 읽고 있어요...</div></div>`:""}
  ${wr.err?`<div class="expl bad mt">⚠️ ${wr.err}</div>`:""}
- ${wr.res?`
+ ${wr.res?`<div class="sec">목표 달성</div><div class="card">${(wr.res.targets||[]).map(t=>`<div class="stat"><span>${t.status==="ok"?"✅":t.status==="fix"?"⚠️":"❌"} ${t.item}</span><span class="sub" style="font-size:12.5px;text-align:right">${t.comment||""}</span></div>`).join("")}</div>
  <div class="sec">총평</div><div class="card">${wr.res.overall||""}</div>
- ${(wr.res.corrections&&wr.res.corrections.length)?`<div class="sec">교정 · ${wr.res.corrections.length}</div>
- ${wr.res.corrections.map(c=>`<div class="card"><span class="pill">${c.type||"교정"}</span>
+ ${(wr.res.corrections&&wr.res.corrections.length)?wr.res.corrections.map((c,ci)=>`<div class="card"><span class="pill">${c.type||"교정"}</span>
   <div class="mt" style="font-size:16px"><span class="worig">${c.orig}</span> → <span class="wfix">${c.fix}</span></div>
-  <div class="sub" style="margin-top:6px">💡 ${c.why}</div></div>`).join("")}`
- :`<div class="card" style="background:var(--okbg)">🎉 교정할 곳이 없어요 — 훌륭해요!</div>`}
+  <div class="sub" style="margin-top:6px">💡 ${c.why}</div>
+  <button class="btn sm ghost mt" ${wr.saved["c"+ci]?"disabled":""} onclick="addNote('${(c.fix||"").replace(/'/g,"")}','${(c.why||"").replace(/'/g,"")}','c${ci}')">${wr.saved["c"+ci]?"✓ 저장됨":"➕ 오답 노트에 저장"}</button></div>`).join("")
+ :`<div class="card" style="background:var(--okbg)">🎉 교정할 곳이 없어요!</div>`}
  ${wr.res.natural?`<div class="sec">자연스러운 버전</div><div class="card"><div style="line-height:1.8">${wr.res.natural}</div>
  <button class="spk mt" onclick="spk(event,'${(wr.res.natural||"").replace(/['"\n]/g," ")}')">🔊</button></div>`:""}
- ${(wr.res.used_grammar&&wr.res.used_grammar.length)?`<div class="sec">사용한 3B 문법</div><div class="card">${wr.res.used_grammar.map(g=>`<span class="chip">✅ ${g}</span>`).join("")}</div>`:""}
  ${wr.res.tip?`<div class="card gnote" style="margin-top:12px">💡 ${wr.res.tip}</div>`:""}
- <button class="btn mt" onclick="wr.res=null;render()">다시 쓰기</button>`:""}`}
+ <button class="btn mt" onclick="wr.res=null;render()">다시 고쳐서 재제출</button>`:""}`}
+function vNotes(){const ns=S.notes||[];
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">📒 오답 노트</h1><div class="sub">첨삭에서 저장한 나의 문장 ${ns.length}개</div></div></div>
+ <button class="btn primary" onclick="startNoteScram()" ${ns.length?"":"disabled"}>🧩 내 문장으로 조립 연습 (무료)</button>
+ ${ns.length?`<div class="card mt" style="padding:4px 16px">${ns.map((x,i)=>`<div class="vrow" onclick="this.classList.toggle('open')">
+  <div style="flex:1;min-width:0"><div class="vko" style="font-size:15px">${x.ko}</div><div class="vvi">💡 ${x.why}</div></div>
+  <button class="spk" onclick="spk(event,'${x.ko.replace(/'/g,"")}')">🔊</button>
+  <button class="spk" onclick="event.stopPropagation();delNote(${i})">🗑</button></div>`).join("")}</div>`
+ :`<div class="card mt center sub">아직 비어 있어요.<br>🎯 문장 훈련이나 첨삭 결과에서 ➕를 눌러 보세요.</div>`}`}
 
 function vSmart(){if(!sm)return vPractice();
  if(sm.i>=sm.q.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>세션 완료</h1></div>
