@@ -1,3 +1,9 @@
+<!--
+HanaAI 3B — v5
+Date: (điền ngày bạn lưu file)
+Changes this version: Gộp 1 mock engine duy nhất (xóa v1 trùng); sửa nút "→ Phần 쓰기" chết (lỗi biến N trong onclick); viết lại wrongForms (hết jamo rác, distractor = lỗi kinh điển); HADJ fix tính từ 하다; API retry+cache+counter chuẩn; lưu sổ an toàn quote (addNoteG/C, deepClean); guard thi khi chuyển tab; mkPerm chống ra sẵn đáp án; Home thêm gợi ý + Cổng 4A + nhắc sao lưu. Storage giữ nguyên hana3b_v4 — không mất dữ liệu.
+Known issues / TODO: 듣기 dùng TTS (không phải băng thu thật); đề 6–10 tái dùng một phần ngân hàng nghe đề 1–5; cổng "gloss-tap <30%" chưa đo tự động.
+-->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -127,7 +133,7 @@ textarea.tinput{min-height:130px;line-height:1.6;resize:vertical}
 </div></nav>
 
 <script>
-/* ================= DATA ================= */
+/* ================= DATA (VERIFIED — Sejong 3B dump; giữ nguyên) ================= */
 const THEMES=[["특별한 나의 경험","Trải nghiệm đặc biệt"],["음식과 요리","Ẩm thực & nấu ăn"],["실수와 잘못","Sai sót & lỗi lầm"],["멋진 휴가","Kỳ nghỉ tuyệt vời"],["한국에서의 특별한 날","Ngày đặc biệt ở Hàn Quốc"],["나의 진로","Con đường tương lai"]];
 const LS=[
 {n:1,th:0,t:"할아버지, 할머니 이야기도 들어 드렸어요",tv:"Tôi còn lắng nghe cả những câu chuyện của ông bà",tp:"방학 활동과 봉사 활동",tpv:"Hoạt động kỳ nghỉ & tình nguyện",goals:["Nói về hoạt động kỳ nghỉ","Kể trải nghiệm tình nguyện","Phát triển bản thân","Làm gì đó cho người lớn tuổi"],
@@ -218,12 +224,15 @@ const CONTRAST=[
 {l:6,q:"비가 오네요. 우산을 ___.",o:["가져올걸 그랬어요","가져오는 중이에요"],why:"Hối tiếc → -(으)ㄹ걸 그랬다."},
 {l:6,q:"대학교 때 부산에서 ___.",o:["살았었어요","사는 중이에요"],why:"-았었-: quá khứ tách khỏi hiện tại."},
 {l:7,q:"주말에는 등산을 ___ 자전거를 타요.",o:["간다거나","가느라고"],why:"Liệt kê ví dụ → -는다거나."},
+{l:7,q:"영화를 좋아해 ___ 영화 동호회에 가입했어요.",o:["가지고","버리고"],why:"-아/어 가지고: nối lý do kiểu khẩu ngữ; '버리고' không diễn tả lý do."},
 {l:8,q:"숙제를 ___ 잠을 못 잤어요.",o:["하느라고","해도"],why:"-느라고: bận A nên không B."},
 {l:8,q:"B: ___, 아직 멀었어요.",o:["잘하기는요","잘하던데요"],why:"Khiêm tốn trước lời khen → -기는요."},
 {l:9,q:"사람들이 우산을 쓰고 가네요. 비가 ___.",o:["오는 모양이에요","올걸 그랬어요"],why:"Suy đoán từ điều thấy → -는 모양이다."},
+{l:9,q:"오늘은 봄___ 날씨가 따뜻하네요.",o:["같이","같은"],why:"N같이 + động/tính từ (따뜻하다) → 봄같이. '같은' phải đứng trước danh từ."},
 {l:10,q:"커피를 두 잔 ___ 잠이 안 와요.",o:["마셨더니","마시는 모양이에요"],why:"-았더니: kết quả sau hành động của MÌNH."},
 {l:10,q:"어제 시장에 사람이 정말 ___.",o:["많던데요","많는 중이에요"],why:"-던데요: kể điều quan sát. (-는 중 không dùng tính từ)"},
 {l:11,q:"면접 전에 질문을 미리 ___.",o:["준비해 두세요","준비하는구나"],why:"Chuẩn bị dùng sau → -아/어 두다."},
+{l:11,q:"한국어 실력이 조금씩 늘어 ___ 있어요.",o:["가고","버리고"],why:"Tiến triển dần từ nay về sau → -아/어 가다."},
 {l:12,q:"지금 입학 서류를 ___.",o:["준비하는 중이에요","준비할걸 그랬어요"],why:"Đang diễn ra → -는 중이다."},
 {l:12,q:"한국 생활이 ___ 하지만 재미있어요.",o:["힘들기는","힘들자마자"],why:"Công nhận + tương phản → -기는 하다."}];
 /* ===== READ 36 passages ===== */
@@ -267,7 +276,6 @@ const READ=[
 const HUNT={0:[{f:"-아/어 드리다",a:["드리고","드렸어요."]},{f:"-아도/어도",a:["피곤해도"]}],1:[{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]},{f:"-아/어 놓다",a:["놓았어요."]}],2:[{f:"-거든요",a:["먹거든요."]}],3:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 놓다",a:["놓았어요."]}],4:[{f:"-자마자",a:["일어나자마자"]},{f:"-아/어 버리다",a:["버렸어요."]}],5:[{f:"-(으)ㄹ걸 그랬다",a:["참을걸","그랬어요."]}],6:[{f:"-는다거나/ㄴ다거나",a:["탐방한다거나"]}],7:[{f:"-느라고",a:["일하느라고"]},{f:"-거든요",a:["갔거든요."]}],8:[{f:"같이 / 같은",a:["영화같이"]}],9:[{f:"-아/어 드리다",a:["드리고"]}],10:[{f:"-아/어 두다",a:["두었어요."]},{f:"-아/어 가다",a:["가고"]}],11:[{f:"-는 중이다",a:["중이에요."]},{f:"-기는 하다",a:["걱정되기는"]}],12:[{f:"-아/어 드리다",a:["드렸어요."]},{f:"-아도/어도",a:["힘들어도"]}],13:[{f:"-(으)ㄹ 텐데",a:["않았을","텐데"]},{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]}],14:[{f:"-거든요",a:["맛있거든요.","있거든요."]}],15:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 놓다",a:["놓으세요."]}],16:[{f:"-아/어 버리다",a:["버렸어요."]},{f:"-는/(으)ㄴ 모양이다",a:["모양이네요."]}],17:[{f:"-(으)ㄹ걸 그랬다",a:["사과할걸","그랬어요."]}],18:[{f:"-는다거나/ㄴ다거나",a:["달린다거나"]}],19:[{f:"-느라고",a:["일하느라고"]},{f:"-거든요",a:["갔거든요."]}],20:[],21:[],22:[{f:"-아도/어도",a:["없어도"]}],23:[{f:"-는 중이다",a:["중이에요."]},{f:"-기는 하다",a:["많기는"]}],24:[{f:"-거든요",a:["싶거든요."]},{f:"-아도/어도",a:["피곤해도"]}],25:[{f:"-(으)ㄹ까 봐",a:["매진될까","봐"]}],26:[],27:[{f:"-(으)ㄴ 다음에",a:["다음에"]},{f:"-아/어 드리다",a:["드릴게요."]}],28:[{f:"-자마자",a:["도착하자마자"]},{f:"-아/어 버리다",a:["버렸어요."]}],29:[{f:"-(으)ㄹ걸 그랬다",a:["사과할걸","그랬어요."]},{f:"-거든요",a:["좋았거든요."]}],30:[{f:"-는다거나/ㄴ다거나",a:["올라간다거나"]},{f:"-(으)ㄴ 다음에",a:["다음에는"]}],31:[{f:"-아/어 놓다",a:["놓았어요."]}],32:[{f:"-는/(으)ㄴ 모양이다",a:["모양이에요."]},{f:"같이 / 같은",a:["혼례같이"]}],33:[{f:"-기는 하다",a:["어렵기는"]}],34:[{f:"-아/어 두다",a:["둔"]},{f:"-아/어 가다",a:["갈"]}],35:[{f:"-는 중이다",a:["중입니다."]}]};
 const WGUIDE={0:{qs:[["오늘 뭐 했어요?","Hôm nay làm gì?"],["가장 기억에 남는 일은?","Việc đáng nhớ nhất?"],["기분이 어땠어요?","Cảm thấy sao?"],["내일은 뭘 하고 싶어요?","Mai muốn làm gì?"]],st:["오늘은 ...","사실은 ... 거든요","내일은 ... 려고 해요"]},1:{qs:[["무슨 재능이 있어요?","Tài năng gì?"],["누구를 도울 수 있어요?","Giúp ai?"],["언제, 어디에서?","Khi nào, ở đâu?"],["기분이 어떨 것 같아요?","Sẽ thấy sao?"]],st:["저는 ...을 잘해요","...을 도와 드리고 싶어요","아무리 바빠도 ..."]},2:{qs:[["무슨 공연에 갔어요?","Xem gì?"],["누구하고?","Với ai?"],["가장 인상적인 순간은?","Ấn tượng nhất?"],["또 가고 싶어요?","Muốn đi nữa?"]],st:["지난 주말에 콘서트에 갔다 왔어요","표가 매진될까 봐 ...","공연이 정말 ..."]},3:{qs:[["제일 좋아하는 음식은?","Món thích nhất?"],["맛이 어때요?","Vị sao?"],["언제 처음 먹었어요?","Ăn lần đầu?"],["왜 추천해요?","Sao giới thiệu?"]],st:["제가 제일 좋아하는 음식은 ...이에요","자주 먹거든요","먹으면 속이 ..."]},4:{qs:[["무슨 요리예요?","Món gì?"],["재료는요?","Nguyên liệu?"],["첫 단계는요?","Bước đầu?"],["그다음에는요?","Sau đó?"]],st:["오늘은 ...을 소개할게요","먼저 씻은 다음에 ...","마지막으로 ..."]},5:{qs:[["언제 실수했어요?","Khi nào?"],["무슨 실수였어요?","Sai gì?"],["왜 그랬어요?","Vì sao?"],["그다음에 어떻게 됐어요?","Rồi sao?"]],st:["어제 큰 실수를 해 버렸어요","딴생각을 하다가 ...","앞으로는 ..."]},6:{qs:[["누가 왜 사과했어요?","Ai xin lỗi?"],["기분이 어땠어요?","Thấy sao?"],["용서하고 싶어요?","Tha thứ?"],["앞으로는요?","Sau này?"]],st:["메시지 잘 받았어요","일부러 그런 것도 아닌데요, 뭘","우리 오해를 풀고 ..."]},7:{qs:[["무슨 동호회예요?","CLB gì?"],["무슨 활동을 해요?","Hoạt động?"],["얼마나 자주?","Bao lâu?"],["회비는요?","Hội phí?"]],st:["저희는 ... 동호회입니다","한 달에 두 번 모여요","...을 한다거나 ..."]},8:{qs:[["어디로 가고 싶어요?","Đi đâu?"],["왜 그곳이에요?","Sao chọn?"],["뭘 할 거예요?","Làm gì?"],["숙소는요?","Ở đâu?"]],st:["이번 휴가에는 ...에 가려고 해요","일하느라고 오랫동안 ...","자연 경관이 ..."]},9:{qs:[["여러분 나라 결혼식은?","Cưới nước bạn?"],["한국하고 뭐가 달라요?","Khác gì?"],["뭐가 비슷해요?","Giống gì?"],["어떤 결혼식을 원해요?","Muốn kiểu nào?"]],st:["우리 나라 결혼식은 ...","한국에서는 ...는 모양이에요","영화같이 아름다운 ..."]},10:{qs:[["베트남 대표 명절은?","Lễ VN?"],["무슨 음식을 먹어요?","Ăn gì?"],["설날하고 비슷한 점은?","Giống Seollal?"],["다른 점은요?","Khác gì?"]],st:["베트남에서는 설날에 ...","한국 사람들은 떡국을 먹어요","두 나라 모두 ..."]},11:{qs:[["어떤 회사를 원해요?","Cty nào?"],["왜요?","Vì sao?"],["지금 뭘 준비해요?","Chuẩn bị gì?"],["5년 후에는요?","5 năm sau?"]],st:["...에 입사하고 싶어요","미리 준비해 두고 있어요","경력을 쌓아 가면서 ..."]},12:{qs:[["왜 한국 유학이에요?","Sao du học Hàn?"],["뭘 공부하고 싶어요?","Học gì?"],["지금 뭘 준비 중이에요?","Đang chuẩn bị gì?"],["뭘 해 보고 싶어요?","Muốn trải nghiệm gì?"]],st:["...을 공부하러 가고 싶어요","서류를 준비하는 중이에요","걱정되기는 하지만 ..."]}};
 /* ===== CONJUGATION ENGINE ===== */
-const JA="ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ";
 function dzz(ch){const c=ch.charCodeAt(0)-44032;return[(c/588)|0,((c%588)/28)|0,c%28]}
 function czz(a,b,c){return String.fromCharCode(44032+a*588+b*28+c)}
 function isA(v){return v===0||v===8}
@@ -299,83 +307,92 @@ const FR=[["1","-아/어요",0,(s,r)=>AE(s,r)+"요"],["2","-았/었어요",0,(s,
 const VB=[["먹다","ăn",0,""],["읽다","đọc",0,""],["받다","nhận",0,""],["씻다","rửa",0,""],["넣다","cho vào",0,""],["섞다","trộn",0,""],["볶다","xào",0,""],["삶다","luộc",0,""],["찌다","hấp",0,""],["참다","nhịn",0,""],["놓다","đặt",0,""],["찾다","tìm",0,""],["가다","đi",0,""],["오다","đến",0,""],["보다","xem",0,""],["내다","nộp/xin",0,""],["마시다","uống",0,""],["보내다","gửi/trải qua",0,""],["배우다","học",0,""],["기다리다","chờ",0,""],["공부하다","học",0,"h"],["준비하다","chuẩn bị",0,"h"],["연락하다","liên lạc",0,"h"],["사과하다","xin lỗi",0,"h"],["지각하다","đến muộn",0,"h"],["일하다","làm việc",0,"h"],["맵다","cay",1,"b"],["싱겁다","nhạt",1,"b"],["굽다","nướng",0,"b"],["부드럽다","mềm",1,"b"],["듣다","nghe",0,"d"],["쓰다","viết/đắng",0,"eu"],["바쁘다","bận",1,"eu"],["부르다","gọi/hát",0,"reu"],["모르다","không biết",0,"reu"],["다르다","khác",1,"reu"],["살다","sống",0,"l"],["만들다","làm ra",0,"l"],["썰다","thái",0,"l"],["알다","biết",0,"l"]];
 const RT={b:"ㅂ bất quy tắc: bỏ ㅂ + 우 → 매워요, 매우면",d:"ㄷ bất quy tắc: ㄷ→ㄹ trước nguyên âm → 들어요, 들으면",reu:"르 bất quy tắc: thêm ㄹ vào âm trước + 라/러 → 불러요, 몰라요",eu:"ㅡ lược bỏ: bỏ ㅡ, chọn 아/어 theo âm TRƯỚC → 써요, 바빠요",l:"ㄹ lược bỏ trước ㄴ/ㅂ/ㅅ → 사는, 산 (nhưng 살면, 살까)",h:"하다 → 해 (했어요, 해도, 해 버렸어요)","":"ㅏ,ㅗ → 아 · còn lại → 어 · gộp: 오+아=와, 우+어=워, 이+어=여"};
 function conjOf(base,irr,fi){return FR[fi][3](base.slice(0,-1),irr)}
-function wrongForms(base,irr,fi,corr){const st=base.slice(0,-1);const tail=corr.includes(" ")?corr.slice(corr.indexOf(" ")):(FR[fi][1].includes("요")||fi===13||fi===9||fi===7||fi===4||fi===10||fi===11?corr.replace(AE(st,irr),"").replace(PAST(st,irr),""):"");
- const set=new Set([corr]);const out=[];
- const naive=st+(FR[fi][1].startsWith("-아")? (corr.includes("어")?"아":"어"):"")+ (fi<=1?(fi===0?"요":"어요"):corr.slice(corr.search(/[ 버놓드도]/)>=0?corr.search(/[ 버놓드도]/):corr.length));
- const cand=[st+"어"+(fi===0?"요":fi===1?"ㅆ어요":tail),st+"아"+(fi===0?"요":tail),conjOf(base,"",fi),st+corr.slice(AE(st,irr).length)?st+corr.slice(Math.max(1,AE(st,irr).length-1)):st];
- for(const c of cand){if(c&&!set.has(c)&&/[가-힣]/.test(c)){set.add(c);out.push(c)}if(out.length>=3)break}
- while(out.length<3){const v=VB[Math.floor(Math.random()*VB.length)];const alt=conjOf(v[0],v[3],fi);if(!set.has(alt)){set.add(alt);out.push(alt)}}
+/* wrongForms v2 — distractor = lỗi kinh điển, luôn là hangul hợp lệ */
+const AEF={0:"요",4:" 버렸어요",5:" 놓았어요",11:" 드렸어요",13:"도"};
+function wrongForms(base,irr,fi,corr){const st=base.slice(0,-1);const set=new Set([corr]);const out=[];
+ const push=c=>{if(c&&!set.has(c)&&!/[\u3131-\u3163]/.test(c)){set.add(c);out.push(c)}};
+ if(irr)push(conjOf(base,"",fi));
+ const vv=dzz(st[st.length-1])[1];
+ const wa=st+(isA(vv)?"어":"아"),ua=st+(isA(vv)?"아":"어");
+ if(AEF[fi]!==undefined){push(wa+AEF[fi]);push(ua+AEF[fi])}
+ else if(fi===1){const pf=b=>{const K=b.length-1;const[x,y]=dzz(b[K]);return b.slice(0,K)+czz(x,y,20)};push(pf(wa)+"어요");push(pf(ua)+"어요")}
+ let guard=0;
+ while(out.length<3&&guard++<80){const v=VB[(Math.random()*VB.length)|0];if(v[0]!==base)push(conjOf(v[0],v[3],fi))}
  return out.slice(0,3)}
-/* ===== TOPIK MOCK BANKS ===== */
-const MOCKL=[
-{a:"여자: 주말에 뭐 했어요? 남자: 봉사 활동을 하러 요양원에 갔다 왔어요.",q:"남자는 주말에 무엇을 했습니까?",o:["봉사 활동","아르바이트","여행","운동"],a2:0},
-{a:"남자: 왜 이렇게 일찍 왔어요? 여자: 표가 매진될까 봐 일찍 왔어요.",q:"여자는 왜 일찍 왔습니까?",o:["표가 매진될까 봐","길이 막혀서","약속이 있어서","날씨가 좋아서"],a2:0},
-{a:"여자: 이 찌개 어때요? 남자: 국물이 얼큰해서 정말 맛있네요.",q:"남자는 찌개가 어떻다고 했습니까?",o:["얼큰해서 맛있다","너무 싱겁다","조금 달다","아주 쓰다"],a2:0},
-{a:"남자: 요리 다 했어요? 여자: 아니요, 지금 채소를 썰어 놓는 중이에요.",q:"여자는 지금 무엇을 합니까?",o:["채소를 썰어요","설거지를 해요","밥을 먹어요","시장에 가요"],a2:0},
-{a:"여자: 왜 지각했어요? 남자: 늦잠을 자서 버스를 놓쳐 버렸어요.",q:"남자는 왜 늦었습니까?",o:["버스를 놓쳐서","비가 와서","아파서","일이 많아서"],a2:0},
-{a:"남자: 어제는 제가 말이 심했어요. 여자: 괜찮아요. 신경 쓰지 마세요.",q:"여자의 태도로 맞는 것은?",o:["용서한다","화를 낸다","자리를 떠난다","운다"],a2:0},
-{a:"여자: 동호회 모임이 언제예요? 남자: 매주 토요일 아침에 한강 공원에서 모여요.",q:"모임은 언제 합니까?",o:["토요일 아침","일요일 저녁","금요일 밤","수요일 점심"],a2:0},
-{a:"남자: 휴가 어디로 가요? 여자: 부산에 가려고 호텔을 예약해 놓았어요.",q:"여자는 무엇을 했습니까?",o:["호텔을 예약했다","표를 샀다","가방을 쌌다","친구를 만났다"],a2:0},
-{a:"여자: 결혼식이 몇 시예요? 남자: 낮 12시예요. 피로연은 끝난 다음에 있어요.",q:"피로연은 언제 합니까?",o:["결혼식이 끝난 후","결혼식 전","아침","다음 날"],a2:0},
-{a:"남자: 설날에 뭐 해요? 여자: 가족들과 떡국을 먹고 세배를 드려요.",q:"여자는 설날에 무엇을 합니까?",o:["떡국을 먹고 세배를 한다","여행을 간다","일을 한다","친구를 만난다"],a2:0},
-{a:"여자: 면접 준비 잘돼요? 남자: 네, 예상 질문을 미리 준비해 두었어요.",q:"남자는 무엇을 준비했습니까?",o:["예상 질문","이력서 사진","새 옷","명함"],a2:0},
-{a:"남자: 유학 준비는 어때요? 여자: 지금 서류를 제출하는 중이에요.",q:"여자는 지금 무엇을 합니까?",o:["서류 제출","비자 면접","이사","입학 시험"],a2:0},
-{a:"여자: 방학에 아르바이트했어요? 남자: 아니요, 어학연수를 하느라고 못 했어요.",q:"남자는 왜 아르바이트를 못 했습니까?",o:["어학연수 때문에","아파서","여행 때문에","시험 때문에"],a2:0},
-{a:"남자: 콘서트 어땠어요? 여자: 무대가 정말 환상적이었어요.",q:"여자의 감상은?",o:["환상적이었다","지루했다","짧았다","시끄러웠다"],a2:0},
-{a:"여자: 이 과자 좀 드세요. 남자: 와, 정말 바삭하네요.",q:"과자는 어떻습니까?",o:["바삭하다","눅눅하다","질기다","달다"],a2:0},
-{a:"남자: 뭐 만들어요? 여자: 생선을 구운 다음에 채소를 볶을 거예요.",q:"여자가 먼저 하는 일은?",o:["생선 굽기","채소 볶기","밥 짓기","설거지"],a2:0},
-{a:"여자: 지갑 찾았어요? 남자: 네, 다행히 카페 직원이 보관해 주셨어요.",q:"지갑은 어떻게 됐습니까?",o:["직원이 보관했다","잃어버렸다","집에 있었다","친구가 가져갔다"],a2:0},
-{a:"남자: 정말 미안해요. 여자: 일부러 그런 것도 아닌데요, 뭘.",q:"여자의 말의 의미는?",o:["괜찮다","화가 났다","이해 못 한다","떠나겠다"],a2:0},
-{a:"여자: 회비가 있어요? 남자: 네, 한 달에 만 원이에요.",q:"회비는 얼마입니까?",o:["한 달에 만 원","무료","일 년에 만 원","오만 원"],a2:0},
-{a:"남자: 휴가 때 뭐 했어요? 여자: 호텔에서 여유를 즐기면서 재충전을 했어요.",q:"여자는 휴가를 어떻게 보냈습니까?",o:["호텔에서 쉬었다","등산을 했다","일을 했다","공부했다"],a2:0},
-{a:"여자: 신랑 신부가 입장해요! 남자: 와, 정말 영화같이 아름답네요.",q:"남자의 느낌은?",o:["영화처럼 아름답다","지루하다","이상하다","슬프다"],a2:0},
-{a:"남자: 추석에 송편 만들어 봤어요? 여자: 네, 어렵기는 했지만 재미있었어요.",q:"여자의 경험은?",o:["어려웠지만 재미있었다","쉬웠다","못 만들었다","맛이 없었다"],a2:0},
-{a:"여자: 취업 준비 어떻게 해요? 남자: 자격증을 따고 경력을 쌓아 가고 있어요.",q:"남자가 하는 일이 아닌 것은?",o:["유학 준비","자격증 따기","경력 쌓기","취업 준비"],a2:0},
-{a:"남자: 기숙사 신청했어요? 여자: 아직요. 장학금 신청서를 먼저 내려고요.",q:"여자가 먼저 하려는 것은?",o:["장학금 신청","기숙사 신청","비자 신청","수강 신청"],a2:0},
-{a:"여자: 왜 전화 안 받았어요? 남자: 미안해요. 회의하느라고 못 받았어요.",q:"남자는 왜 전화를 못 받았습니까?",o:["회의 때문에","자고 있어서","전화가 고장 나서","운전 때문에"],a2:0},
-{a:"남자: 이 김치 직접 만들었어요? 여자: 네, 요리를 배우고 있거든요.",q:"여자에 대해 맞는 것은?",o:["요리를 배우고 있다","김치를 샀다","요리를 싫어한다","식당에서 일한다"],a2:0},
-{a:"여자: 내일 등산 갈 수 있어요? 남자: 미안해요. 시험 공부를 해야 하거든요.",q:"남자는 내일 무엇을 합니까?",o:["시험 공부","등산","여행","아르바이트"],a2:0},
-{a:"남자: 소포 보냈어요? 여자: 네, 아침에 도착하자마자 바로 보냈어요.",q:"여자는 소포를 언제 보냈습니까?",o:["아침에 도착하자마자","점심에","저녁에","아직 안 보냈다"],a2:0},
-{a:"여자: 그 영화 봤어요? 남자: 네, 정말 감동적이던데요.",q:"남자는 영화가 어땠다고 합니까?",o:["감동적이었다","무서웠다","지루했다","웃겼다"],a2:0},
-{a:"남자: 한국 생활이 어때요? 여자: 힘들기는 하지만 정말 재미있어요.",q:"여자의 한국 생활은?",o:["힘들지만 재미있다","쉽고 편하다","재미없다","외롭다"],a2:0}];
-const MOCKG=[
-{q:"날씨가 추워서 창문을 (    ).",o:["닫아 버렸어요","닫어 버렸어요","닫라 버렸어요","닫으 버렸어요"],a:0,x:"받침 O + ㅏ → 아: 닫아",ln:5},
-{q:"매운 음식을 먹으면 속이 (    ).",o:["쓰려요","쓰어요","쓰라요","씁니어요"],a:0,x:"쓰리다: ㅣ+어→여 → 쓰려요",ln:3},
-{q:"할머니께 노래를 (    ).",o:["불러 드렸어요","부르어 드렸어요","불다 드렸어요","부러 드렸어요"],a:0,x:"르 불규칙: 부르다→불러",ln:1},
-{q:"이 라면은 국물이 조금 (    ).",o:["싱거워요","싱겁어요","싱거어요","싱겁아요"],a:0,x:"ㅂ 불규칙: 싱겁다→싱거워요",ln:3},
-{q:"음악을 (    ) 공부해요.",o:["들으면서","듣으면서","들면서","듣면서"],a:0,x:"ㄷ 불규칙: 듣다→들으면서",ln:1},
-{q:"바빠서 점심을 못 (    ).",o:["먹었어요","먹았어요","먹어어요","먹였어요"],a:0,x:"먹+었어요",ln:5},
-{q:"주말에 캠핑을 (    ) 낚시를 해요.",o:["간다거나","가다거나","갔다거나","가는다거나"],a:0,x:"동사 받침X → -ㄴ다거나",ln:7},
-{q:"친구가 올까 봐 음식을 미리 (    ).",o:["만들어 놓았어요","만들아 놓았어요","만드러 놓았어요","만들 놓았어요"],a:0,x:"만들+어",ln:4},
-{q:"어제 일찍 (    ) 그랬어요.",o:["잘걸","자을걸","잤걸","자는걸"],a:0,x:"자다(받침X)→잘걸",ln:6},
-{q:"지금 이력서를 (    ) 중이에요.",o:["쓰는","써는","쓰은","씁는"],a:0,x:"-는 중: 쓰+는",ln:12},
-{q:"동생은 요즘 시험 준비를 (    ) 바빠요.",o:["하느라고","해느라고","하으느라고","한느라고"],a:0,x:"-느라고: 어간+느라고",ln:8},
-{q:"제주도는 경치가 정말 (    ).",o:["아름답던데요","아름다워던데요","아름답았던데요","아름다우던데요"],a:0,x:"-던데요: 어간에 바로",ln:10},
-{q:"떡국을 (    ) 배가 불렀어요.",o:["먹었더니","먹더니","먹었더면","먹은더니"],a:0,x:"-았/었더니",ln:10},
-{q:"표를 못 (    ) 봐 걱정했어요.",o:["구할까","구했을까","구하까","구할가"],a:0,x:"-(으)ㄹ까 봐: 구하+ㄹ까",ln:2},
-{q:"아무리 (    ) 포기하지 마세요.",o:["힘들어도","힘들도","힘들아도","힘드러도"],a:0,x:"힘들+어도",ln:1},
-{q:"수업이 (    ) 전화하세요.",o:["끝난 다음에","끝은 다음에","끝나은 다음에","끝나는 다음에"],a:0,x:"끝나다→끝난",ln:4},
-{q:"집에 (    ) 손을 씻으세요.",o:["도착하자마자","도착하자말자","도착해자마자","도착하고자마자"],a:0,x:"어간+자마자",ln:5},
-{q:"어렸을 때 부산에 (    ).",o:["살았었어요","살었었어요","살랐어요","사았었어요"],a:0,x:"살+았었어요",ln:6},
-{q:"이 일은 제 적성에 (    ) 해요.",o:["맞기는","맞이기는","맞는기는","맞아기는"],a:0,x:"-기는 하다: 어간+기는",ln:12},
-{q:"비가 (    ) 우산을 가져가세요.",o:["올 텐데","오을 텐데","온 텐데","오는 텐데"],a:0,x:"오다→올 텐데",ln:2},
-{q:"경력을 조금씩 (    ) 가고 있어요.",o:["쌓아","쌓어","싸아","쌓라"],a:0,x:"쌓+아 (ㅏ)",ln:11},
-{q:"질문이 있으면 저에게 (    ).",o:["연락 주세요","연락 줘요세요","연락 주으세요","연락 줍세요"],a:0,x:"주다→주세요",ln:7},
-{q:"고기를 (    ) 야채도 준비하세요.",o:["구우면서","굽으면서","구브면서","굽면서"],a:0,x:"ㅂ 불규칙: 굽다→구우면서",ln:4},
-{q:"몰라서 선생님께 (    ).",o:["여쭤봤어요","물어봤어요","여쭈봤어요","묻어봤어요"],a:1,x:"묻다→물어(ㄷ불규칙); 여쭤봤어요도 맞지만 표기는 '여쭤'",ln:1},
-{q:"서류를 미리 준비해 (    ) 좋을 거예요.",o:["두면","둬면","두으면","둔면"],a:0,x:"두다→두면",ln:11},
-{q:"약속을 (    ) 정말 미안해요.",o:["잊어버려서","잊어버레서","잊아버려서","잊버려서"],a:0,x:"잊+어 버리다",ln:5},
-{q:"한국 친구를 많이 (    ) 싶어요.",o:["사귀고","사겨고","사귀어고","사귑고"],a:0,x:"-고 싶다: 어간+고",ln:12},
-{q:"결혼식이 끝난 (    ) 피로연이 있어요.",o:["다음에","다음이","다음을","다음은"],a:0,x:"-(으)ㄴ 다음에",ln:9},
-{q:"오늘 좀 피곤해 (    ) 일찍 잘게요.",o:["가지고","가져서","가지서","갖고서"],a:0,x:"-아/어 가지고 (구어)",ln:7},
-{q:"seollal에 어른들께 세배를 (    ).",o:["드려요","드러요","드리어요","들여요"],a:0,x:"드리다: ㅣ+어→여 → 드려요",ln:10}];
-const MRP=[0,13,3,16,7,20,19,22,33,35];
+/* ===== TOPIK MOCK BANKS (một engine duy nhất) ===== */
+const ML2=[
+{a:"여자: 주말에 뭐 했어요? 남자: 요양원에서 봉사 활동을 했어요.",q:"남자는 주말에 무엇을 했습니까?",o:["봉사 활동을 했다","아르바이트를 했다","여행을 갔다","집에서 쉬었다"],c:0},
+{a:"남자: 왜 이렇게 일찍 왔어요? 여자: 표가 매진될까 봐 일찍 왔어요.",q:"여자는 왜 일찍 왔습니까?",o:["표가 매진될까 봐","길이 막혀서","약속이 있어서","날씨가 좋아서"],c:0},
+{a:"여자: 이 찌개 어때요? 남자: 국물이 얼큰해서 자꾸 먹게 되네요.",q:"남자는 찌개가 어떻다고 합니까?",o:["얼큰해서 좋다","너무 싱겁다","조금 달다","아주 쓰다"],c:0},
+{a:"남자: 요리 다 됐어요? 여자: 아직요. 지금 채소를 썰어 놓는 중이에요.",q:"여자는 지금 무엇을 합니까?",o:["채소를 썰고 있다","설거지를 한다","밥을 먹는다","시장에 간다"],c:0},
+{a:"여자: 왜 지각했어요? 남자: 딴생각을 하다가 버스를 놓쳐 버렸어요.",q:"남자는 왜 늦었습니까?",o:["버스를 놓쳐서","비가 와서","아파서","일이 많아서"],c:0},
+{a:"남자: 어제는 제가 말이 심했어요. 여자: 괜찮아요. 일부러 그런 것도 아닌데요, 뭘.",q:"여자의 태도로 알맞은 것은?",o:["이해하고 용서한다","계속 화가 나 있다","자리를 떠난다","사과를 요구한다"],c:0},
+{a:"여자: 모임이 언제예요? 남자: 매주 토요일 아침에 한강 공원에서 모여요.",q:"모임은 언제 합니까?",o:["토요일 아침","일요일 저녁","금요일 밤","수요일 점심"],c:0},
+{a:"남자: 휴가 준비 다 했어요? 여자: 네, 호텔도 미리 예약해 놓았어요.",q:"여자는 무엇을 했습니까?",o:["호텔을 예약해 두었다","표를 취소했다","가방을 잃어버렸다","회사에 갔다"],c:0},
+{a:"여자: 결혼식이 몇 시예요? 남자: 낮 12시요. 피로연은 식이 끝난 다음에 있어요.",q:"피로연은 언제 합니까?",o:["결혼식이 끝난 후에","결혼식 전에","아침 일찍","다음 날"],c:0},
+{a:"남자: 설날에 보통 뭐 해요? 여자: 떡국을 먹고 어른들께 세배를 드려요.",q:"여자는 설날에 무엇을 합니까?",o:["떡국을 먹고 세배를 한다","여행을 간다","일을 한다","친구를 만난다"],c:0},
+{a:"여자: 면접 준비는요? 남자: 예상 질문을 미리 준비해 두었어요.",q:"남자는 무엇을 준비했습니까?",o:["예상 질문에 대한 대답","새 양복","회사 지도","명함"],c:0},
+{a:"남자: 요즘 바빠 보여요. 여자: 유학 서류를 준비하는 중이거든요.",q:"여자는 지금 무엇을 합니까?",o:["유학 서류 준비","비자 면접","이사 준비","시험 공부"],c:0},
+{a:"여자: 어제 전화 왜 안 받았어요? 남자: 미안해요. 회의하느라고 못 받았어요.",q:"남자는 왜 전화를 못 받았습니까?",o:["회의 때문에","자고 있어서","휴대폰이 고장 나서","운전 때문에"],c:0},
+{a:"남자: 콘서트 어땠어요? 여자: 무대가 정말 환상적이던데요.",q:"여자의 감상으로 맞는 것은?",o:["환상적이었다","지루했다","너무 짧았다","시끄러웠다"],c:0},
+{a:"여자: 이 과자 어때요? 남자: 눅눅하지 않고 아주 바삭하네요.",q:"과자는 어떻습니까?",o:["바삭하다","눅눅하다","질기다","너무 달다"],c:0},
+{a:"남자: 순서가 어떻게 돼요? 여자: 생선을 구운 다음에 채소를 볶으면 돼요.",q:"먼저 해야 하는 일은?",o:["생선 굽기","채소 볶기","밥 짓기","설거지"],c:0},
+{a:"여자: 지갑 찾았어요? 남자: 네, 카페 직원이 잘 보관해 주셨더라고요.",q:"지갑은 어떻게 되었습니까?",o:["직원이 보관해 주었다","결국 못 찾았다","집에 있었다","친구가 가져갔다"],c:0},
+{a:"남자: 한국어 정말 잘하시네요. 여자: 잘하기는요. 아직 많이 부족해요.",q:"여자의 대답의 의미는?",o:["겸손하게 부정한다","자랑하고 있다","화를 내고 있다","질문을 못 들었다"],c:0},
+{a:"여자: 휴가 때 뭐 했어요? 남자: 밀린 일을 처리하느라고 아무 데도 못 갔어요.",q:"남자는 휴가를 어떻게 보냈습니까?",o:["일을 하면서 보냈다","여행을 갔다","호텔에서 쉬었다","고향에 갔다"],c:0},
+{a:"남자: 송편 만들어 봤어요? 여자: 네, 어렵기는 했지만 정말 재미있었어요.",q:"여자의 경험으로 맞는 것은?",o:["어려웠지만 재미있었다","쉽고 간단했다","만들다가 포기했다","맛이 없었다"],c:0}];
+const MG2=[
+{q:"약속 시간에 늦어서 택시를 (    ).",o:["타 버렸어요","타 놓았어요","타 드렸어요","타고 싶어요"],c:0,x:"Kết quả dứt điểm trong tình huống gấp → -아/어 버리다",ln:5},
+{q:"손님이 오기 전에 음식을 미리 (    ).",o:["만들어 놓았습니다","만들자마자","만들 텐데","만드는 중에"],c:0,x:"미리 + giữ kết quả → -아/어 놓다",ln:4},
+{q:"이 국은 조금 (    ) 소금을 더 넣었어요.",o:["싱거워서","싱겁어서","싱거서","싱겁아서"],c:0,x:"ㅂ bất quy tắc: 싱겁다→싱거워",ln:3},
+{q:"음악을 (    ) 요리하는 것을 좋아해요.",o:["들으면서","듣으면서","들면서","듣아면서"],c:0,x:"ㄷ bất quy tắc: 듣다→들으면서",ln:1},
+{q:"표가 (    ) 봐 두 달 전에 예매했어요.",o:["매진될까","매진할까","매진될","매진되을까"],c:0,x:"-(으)ㄹ까 봐: 되다→될까",ln:2},
+{q:"어제 백화점에 갔는데 사람이 정말 (    ).",o:["많던데요","많는데요","많은 중이에요","많거든요?"],c:0,x:"Kể điều đã quan sát → -던데요",ln:10},
+{q:"주말에는 등산을 (    ) 캠핑을 가요.",o:["간다거나","가다거나","갔다거나","가는다거나"],c:0,x:"Động từ không patchim → -ㄴ다거나",ln:7},
+{q:"시험 공부를 (    ) 잠을 세 시간밖에 못 잤어요.",o:["하느라고","해느라고","하려고","해서라고"],c:0,x:"Bận A nên không B → -느라고",ln:8},
+{q:"친구 말을 먼저 (    ) 그랬어요.",o:["들어 볼걸","듣어 볼걸","들을걸요","듣기는"],c:0,x:"Hối tiếc → -(으)ㄹ걸 그랬다; 듣다→들어",ln:6},
+{q:"할머니께 사진을 찍어 (    ).",o:["드렸습니다","줬습니다","드리었습니다","드렸어"],c:0,x:"Người trên + văn viết trang trọng → 드렸습니다",ln:1},
+{q:"떡국을 한 그릇 다 (    ) 배가 불렀어요.",o:["먹었더니","먹더니","먹으니까는","먹는 중에"],c:0,x:"Hành động của mình + kết quả phát hiện → -았더니",ln:10},
+{q:"지금 입사 지원서를 (    ) 중입니다.",o:["쓰는","써는","쓰은","씁는"],c:0,x:"-는 중: 쓰다→쓰는",ln:12},
+{q:"아무리 (    ) 아침 운동은 꼭 해요.",o:["바빠도","바쁘어도","바빠서도","바쁘아도"],c:0,x:"ㅡ lược bỏ: 바쁘다→바빠 + 도",ln:1},
+{q:"결혼식이 (    ) 다음에 피로연이 있습니다.",o:["끝난","끝나은","끝는","끝났는"],c:0,x:"-(으)ㄴ 다음에: 끝나다→끝난",ln:9},
+{q:"한국 생활이 (    ) 하지만 보람이 있어요.",o:["힘들기는","힘든기는","힘들기가","힘들지는"],c:0,x:"-기는 하다",ln:12},
+{q:"동생 결혼식에서 축가를 (    ).",o:["불렀습니다","부렀습니다","불었습니다","부르었습니다"],c:0,x:"르 bất quy tắc: 부르다→불러→불렀",ln:9},
+{q:"필요한 경력을 조금씩 (    ) 가고 있습니다.",o:["쌓아","쌓어","싸아","쌓으러"],c:0,x:"쌓다: ㅏ→아; -아 가다",ln:11},
+{q:"집에 (    ) 손부터 씻으세요.",o:["도착하자마자","도착하자말자","도착해자마자","도착한자마자"],c:0,x:"어간+자마자 (không chia)",ln:5},
+{q:"매운 것을 먹으면 속이 (    ).",o:["쓰려요","쓰러요","쓰리어요","씁니다요"],c:0,x:"쓰리다: 리+어→려",ln:3},
+{q:"비가 (    ) 우산을 가져가세요.",o:["올 텐데","오을 텐데","온 텐데","오는 텐데"],c:0,x:"오다→올 텐데",ln:2}];
+const TH2=[{pi:20,c:"결혼식 초대",o:["결혼식 초대","회원 모집","직원 채용","행사 안내"]},{pi:18,c:"회원 모집",o:["회원 모집","결혼식 초대","아르바이트 후기","여행 안내"]},{pi:22,c:"직원 채용",o:["직원 채용","회원 모집","제품 광고","학교 안내"]},{pi:21,c:"행사 안내",o:["행사 안내","맛집 소개","교통 안내","날씨 안내"]},{pi:15,c:"요리 방법",o:["요리 방법","식당 광고","건강 정보","쇼핑 안내"]},{pi:26,c:"음식 추천",o:["음식 추천","식당 예약","요리 강좌 모집","건강 검진 안내"]}];
+const OP2=[3,15,5,28,34,8,24,33,31,9];
+const RC2=[0,13,7,16,19,32,27,30,35,11];
+const W512=[
+{t:"동호회 회원 여러분께.\n이번 주 토요일에 같이 북한산에 (   ㉠   ).\n오고 싶은 분은 저에게 연락해 주세요.",m:"등산을 가려고 합니다 / 가는 게 어때요?",h:"Câu rủ rê/kế hoạch: -(으)려고 하다, -는 게 어때요?"},
+{t:"수진 씨, 어제는 정말 미안했어요.\n제가 (   ㉠   ).\n앞으로 주의하겠습니다.",m:"말실수를 해서 기분이 나빴지요? / 좀 참을걸 그랬어요.",h:"Xin lỗi + hối tiếc: -을걸 그랬어요"},
+{t:"내일 요리 수업이 있습니다.\n수업 전에 채소를 미리 (   ㉠   ).\n그럼 내일 만나요!",m:"씻어서 썰어 놓으세요 / 준비해 놓으세요.",h:"Chuẩn bị sẵn: -아/어 놓다 + 세요"},
+{t:"부장님, 죄송합니다.\n오늘 아침에 (   ㉠   ) 지각했습니다.\n앞으로는 알람을 두 개 맞춰 놓겠습니다.",m:"늦잠을 자서 / 버스를 놓쳐서",h:"Lý do: -아/어서"},
+{t:"마크 씨, 휴가 잘 보내고 있어요?\n저는 일이 많아서 (   ㉠   ).\n다음에 꼭 같이 가요.",m:"아무 데도 못 갔어요 / 여행을 못 갔어요",h:"일하느라고 + 못"},
+{t:"여러분, 이번 주말이 정월 대보름입니다.\n같이 보름달을 (   ㉠   ).\n장소는 시민 공원입니다.",m:"보면서 소원을 빌어요 / 보러 갑시다",h:"-(으)면서 / -(으)러 가다"},
+{t:"김 대리님, 축하합니다!\n승진 소식을 (   ㉠   ) 정말 기뻤습니다.\n오늘 저녁에 축하 파티 어때요?",m:"듣고 / 들었을 때",h:"듣다→들어 (ㄷ bất quy tắc)"},
+{t:"안녕하세요. 유학생 링입니다.\n지금 기숙사 신청서를 (   ㉠   ).\n언제까지 내야 하는지 알려 주시면 감사하겠습니다.",m:"작성하는 중입니다 / 준비하고 있습니다",h:"-는 중이다"},
+{t:"이 식당의 김치찌개는 국물이 (   ㉠   ) 인기가 많습니다.\n한번 드셔 보세요.",m:"얼큰해서 / 맵지만 맛있어서",h:"Vị + lý do -아/어서"},
+{t:"콘서트에 가고 싶은 분들께.\n표가 빨리 (   ㉠   ) 오늘 예매하세요.\n좌석이 얼마 안 남았습니다.",m:"매진될까 봐 걱정되면 / 매진될 수 있으니까",h:"-(으)ㄹ까 봐 / -(으)니까"}];
+const W532=[
+{t:"지난 방학에 한 일",b:"· 어디에서 무엇을 했습니까?\n· 무엇이 가장 기억에 남습니까?\n· 그 경험에서 무엇을 느꼈습니까?",g:"-았/었더니, 보람을 느끼다"},
+{t:"콘서트/공연 후기",b:"· 언제, 누구의 공연에 갔습니까?\n· 표는 어떻게 구했습니까?\n· 공연이 어땠습니까?",g:"-(으)ㄹ까 봐, 감동적이다"},
+{t:"내가 좋아하는 음식",b:"· 무슨 음식을 좋아합니까?\n· 맛이 어떻습니까?\n· 왜 다른 사람에게 추천하고 싶습니까?",g:"-거든요, 얼큰하다/담백하다"},
+{t:"내가 잘하는 요리",b:"· 무슨 요리입니까?\n· 어떤 순서로 만듭니까?\n· 언제 이 요리를 만듭니까?",g:"-(으)ㄴ 다음에, -아/어 놓다"},
+{t:"기억에 남는 실수",b:"· 언제, 무슨 실수를 했습니까?\n· 왜 그런 실수를 했습니까?\n· 그 후에 어떻게 되었습니까?",g:"-아/어 버리다, -자마자"},
+{t:"친구와 화해한 경험",b:"· 왜 사이가 안 좋아졌습니까?\n· 어떻게 화해했습니까?\n· 지금 어떻게 지냅니까?",g:"-(으)ㄹ걸 그랬다, 오해를 풀다"},
+{t:"가입하고 싶은 동호회",b:"· 무슨 동호회에 가입하고 싶습니까?\n· 그 동호회는 무엇을 합니까?\n· 왜 가입하고 싶습니까?",g:"-는다거나, 인맥을 쌓다"},
+{t:"나의 휴가 계획",b:"· 어디로 가고 싶습니까?\n· 거기에서 무엇을 할 겁니까?\n· 왜 그곳을 선택했습니까?",g:"-느라고, 여유를 즐기다"},
+{t:"우리 나라의 명절",b:"· 대표적인 명절이 무엇입니까?\n· 그날 무엇을 합니까?\n· 한국의 명절과 무엇이 비슷합니까?",g:"-던데요, 소원을 빌다"},
+{t:"나의 진로 계획",b:"· 어떤 일을 하고 싶습니까?\n· 지금 무엇을 준비하고 있습니까?\n· 앞으로 어떻게 할 겁니까?",g:"-아/어 두다, -아/어 가다"}];
 /* ===== STATE ===== */
 const KEY="hana3b_v4";
 let S=load();
-function load(){for(const k of[KEY,"hana3b_v3","hana3b_v2","hana3b_v1"]){try{const d=JSON.parse(localStorage.getItem(k));if(d&&d.cards)return Object.assign({read:{},akey:"",amodel:"claude-sonnet-4-5",myReads:[],cj:{},mock:{}},d)}catch(e){}}
- return{cards:{},xp:0,streak:0,lastDay:null,last:null,incExp:false,chk:{},read:{},akey:"",amodel:"claude-sonnet-4-5",myReads:[],cj:{},mock:{}}}
-S.myReads=S.myReads||[];S.myReads.forEach(p=>READ.push(p));S.cj=S.cj||{};S.mock=S.mock||{};
+function load(){for(const k of[KEY,"hana3b_v3","hana3b_v2","hana3b_v1"]){try{const d=JSON.parse(localStorage.getItem(k));if(d&&d.cards)return Object.assign({read:{},akey:"",amodel:"claude-sonnet-4-5",myReads:[],cj:{},mock:{},aiCache:{}},d)}catch(e){}}
+ return{cards:{},xp:0,streak:0,lastDay:null,last:null,incExp:false,chk:{},read:{},akey:"",amodel:"claude-sonnet-4-5",myReads:[],cj:{},mock:{},aiCache:{}}}
+S.myReads=S.myReads||[];S.myReads.forEach(p=>READ.push(p));S.cj=S.cj||{};S.mock=S.mock||{};S.aiCache=S.aiCache||{};
 function save(){localStorage.setItem(KEY,JSON.stringify(S))}
 function touchStreak(){const t=new Date().toDateString();if(S.lastDay===t)return;const y=new Date(Date.now()-864e5).toDateString();S.streak=(S.lastDay===y)?S.streak+1:1;S.lastDay=t;save()}
 function cid(l,t,i){return l+"-"+t+"-"+i}
@@ -395,6 +412,7 @@ function dueIds(){const now=Date.now();return Object.keys(S.cards).filter(id=>S.
 function lessonProg(l){const vs=lessonVocab(l,false);return vs.reduce((a,v)=>a+mast(v.id),0)/(vs.length*4)}
 function studiedLessons(){const s=new Set();Object.keys(S.cards).forEach(id=>{if(VMAP[id])s.add(VMAP[id].l)});return[...s]}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function mkPerm(n){let p,g=0;do{p=shuffle([...Array(n).keys()])}while(++g<20&&n>1&&p.every((v,i)=>v===i));return p}
 function norm(s){return s.replace(/\s+/g,"").replace(/[.?!,]/g,"")}
 const YAY=["Tốt lắm! 🌱","Chính xác ✨","Hoàn hảo!","Tuyệt vời 👏"];
 const OOPS=["Không sao — sẽ gặp lại ngay 🔁","Sai cũng là học 🔁"];
@@ -402,17 +420,21 @@ function yay(){return YAY[Math.floor(Math.random()*YAY.length)]}
 function oops(){return OOPS[Math.floor(Math.random()*OOPS.length)]}
 function speak(t){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(t);u.lang="ko-KR";u.rate=0.92;speechSynthesis.cancel();speechSynthesis.speak(u)}
 function spk(e,t){e.stopPropagation();speak(t)}
+function spkN(e,i){e.stopPropagation();if(S.notes&&S.notes[i])speak(S.notes[i].ko)}
 /* ===== ROUTER ===== */
 let route={v:"home"},stack=[];
 function go(v,arg){stack.push(route);route={v,arg};render()}
 function back(){route=stack.pop()||{v:"home"};G=null;render()}
-function setTab(v){stack=[];sm=null;sc=null;ct=null;qz=null;dt=null;cj=null;mk=null;G=null;route={v};render()}
+function setTab(v){
+ if(MK&&MK.phase==="test"){if(!confirm("Đang làm bài thi — thoát sẽ mất bài. Thoát?"))return;MK=null}
+ if(MKIV)clearInterval(MKIV);if(smT)clearTimeout(smT);
+ stack=[];sm=null;sc=null;ct=null;qz=null;dt=null;cj=null;G=null;route={v};render()}
 function tgl(el){el.classList.toggle("open")}
 function toggleExp(){S.incExp=!S.incExp;save();render()}
 function setChk(i,v){S.chk[i]=v;save()}
 function resetAll(){if(confirm("Xóa toàn bộ dữ liệu học?")){localStorage.removeItem(KEY);S=load();render()}}
-function exportData(){const d={...S};delete d.akey;const blob=new Blob([JSON.stringify(d)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sejong3b_backup.json";document.body.appendChild(a);a.click();a.remove()}
-function copyData(){const d={...S};delete d.akey;const t=JSON.stringify(d);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert("Đã copy 📋"));else prompt("Copy:",t)}
+function exportData(){S.lastExp=Date.now();save();const d={...S};delete d.akey;const blob=new Blob([JSON.stringify(d)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sejong3b_backup.json";document.body.appendChild(a);a.click();a.remove();render()}
+function copyData(){S.lastExp=Date.now();save();const d={...S};delete d.akey;const t=JSON.stringify(d);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert("Đã copy 📋"));else prompt("Copy:",t)}
 function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.cards)throw 0;const key=S.akey;S=Object.assign(load(),d);S.akey=key;save();alert("Khôi phục xong! 🌿");location.reload()}catch(e){alert("File không hợp lệ.")}};r.readAsText(f)}
 /* ===== SMART ===== */
 let sm=null,smT=null;
@@ -464,10 +486,11 @@ function ctPick(i){if(ct.ans!==null)return;const q=ct.list[ct.i];ct.ans=i;if(i==
 function ctNext(){ct.i++;ct.ans=null;render();window.scrollTo(0,0)}
 /* ===== CONJUGATION GYM ===== */
 let cj=null;
+const HADJ=new Set(["달콤하다","매콤하다","얼큰하다","담백하다","바삭하다","얼얼하다","편안하다","저렴하다"]);
 function cjWeight(fi){const st=S.cj[fi]||{o:0,b:0};return(st.b+1)/(st.o+1)}
 function cjPool(l){if(!l)return VB.map(v=>({pre:"",base:v[0],vi:v[1],adj:v[2],irr:v[3]}));
  const out=[];lessonVocab(l,false).forEach(v=>{const ws=v.ko.split(" ");const last=ws[ws.length-1];
-  if(last.endsWith("하다")){out.push({pre:ws.slice(0,-1).join(" ")+(ws.length>1?" ":""),base:last,vi:v.vi,adj:last==="좋다"?1:0,irr:"h"})}
+  if(last.endsWith("하다")){out.push({pre:ws.slice(0,-1).join(" ")+(ws.length>1?" ":""),base:last,vi:v.vi,adj:HADJ.has(last)?1:0,irr:"h"})}
   else{const vb=VB.find(x=>x[0]===last);if(vb)out.push({pre:ws.slice(0,-1).join(" ")+(ws.length>1?" ":""),base:last,vi:v.vi,adj:vb[2],irr:vb[3]})}});
  return out.length>=4?out:VB.map(v=>({pre:"",base:v[0],vi:v[1],adj:v[2],irr:v[3]}))}
 function startConj(l){const pool=cjPool(l);const items=[];
@@ -484,25 +507,56 @@ function cjPick(oi){if(cj.ans)return;const it=cj.items[cj.i];const ok=it.opts[oi
  if(ok){cj.ok++;S.xp+=5}else{cj.items.splice(Math.min(cj.i+3,cj.items.length),0,{...it,opts:shuffle([it.corr,...wrongForms(it.w.base,it.w.irr,it.fi,it.corr)]),typing:false})}
  cjRec(it.fi,ok);touchStreak();save();cj.ans={sel:oi,ok};render()}
 function cjSubmit(){if(cj.ans)return;const it=cj.items[cj.i];const ok=norm(cj.typed)===norm(it.corr);
+ S.cjT=S.cjT||{};const tk=String(it.fi);S.cjT[tk]=S.cjT[tk]||{o:0,b:0};ok?S.cjT[tk].o++:S.cjT[tk].b++;
  if(ok){cj.ok++;S.xp+=8}else cj.items.splice(Math.min(cj.i+3,cj.items.length),0,{...it,typing:false,opts:shuffle([it.corr,...wrongForms(it.w.base,it.w.irr,it.fi,it.corr)])});
  cjRec(it.fi,ok);touchStreak();save();cj.ans={ok};render()}
 function cjNext(){cj.i++;cj.ans=null;cj.typed="";render();window.scrollTo(0,0)}
-/* ===== TOPIK MOCK ===== */
-let mk=null;
-function buildMock(t){const qs=[];
- for(let i=0;i<3;i++){const m=MOCKL[(t*3+i)%MOCKL.length];qs.push({sec:"듣기",tp:"L",au:m.a,q:m.q,o:m.o,a:m.a2})}
- for(let i=0;i<3;i++){const m=MOCKG[(t*3+i)%MOCKG.length];qs.push({sec:"문법·어휘",tp:"G",q:m.q,o:m.o,a:m.a,x:m.x,ln:m.ln})}
- for(let i=0;i<2;i++){const w=VB[Math.floor(Math.random()*VB.length)];let fis=FR.map((f,j)=>j).filter(j=>!(w[2]&&FR[j][2]===1));const fi=fis[Math.floor(Math.random()*fis.length)];const corr=conjOf(w[0],w[3],fi);
-  qs.push({sec:"활용",tp:"C",q:`${w[0]} + ${FR[fi][1]}  →  ?`,o:shuffle([corr,...wrongForms(w[0],w[3],fi,corr)]),a:null,corr,x:RT[w[3]]})}
- qs.forEach(q=>{if(q.tp==="C")q.a=q.o.indexOf(q.corr)});
- const P=READ[MRP[t]];P.q.forEach((pq,i)=>qs.push({sec:"읽기",tp:"R",pi:MRP[t],q:pq.q,o:pq.o,a:pq.a}));
+/* ===== TOPIK MOCK — engine duy nhất ===== */
+let MK=null,MKIV=null;
+function m2Order(t){const P=READ[OP2[t%OP2.length]];const sents=[0,1,2,3].map(i=>P.s[i].map(x=>x[0]).join(" "));
+ const disp=mkPerm(4);const lab=["가","나","다","라"];const labOf=k=>lab[disp.indexOf(k)];
+ const corr=[0,1,2,3].map(labOf).join("-");
+ const alts=[[1,0,2,3],[0,2,1,3],[0,1,3,2],[3,2,1,0],[1,2,0,3]].map(o=>o.map(labOf).join("-")).filter(s=>s!==corr);
+ const opts=shuffle([corr,...[...new Set(alts)].slice(0,3)]);
+ return{tp:"O",sec:"읽기",q:"다음을 순서대로 맞게 배열한 것을 고르십시오.",lines:disp.map(k=>lab[disp.indexOf(k)]+". "+sents[k]),o:opts,c:opts.indexOf(corr),x:"Thứ tự đúng: "+corr}}
+function m2Build(t){const qs=[];
+ for(let i=0;i<4;i++){const m=ML2[(t*4+i)%ML2.length];qs.push({tp:"L",sec:"듣기",au:m.a,q:m.q,o:m.o,c:m.c,max:i<2?1:2,pt:8})}
+ for(let i=0;i<2;i++){const th=TH2[(t*2+i)%TH2.length];
+  const opts=shuffle([...th.o]);qs.push({tp:"T",sec:"읽기",pi:th.pi,q:"다음은 무엇에 대한 글입니까?",o:opts,c:opts.indexOf(th.c),pt:6})}
+ for(let i=0;i<2;i++){const g=MG2[(t*2+i)%MG2.length];qs.push({tp:"G",sec:"읽기",q:"(    )에 들어갈 말로 가장 알맞은 것을 고르십시오.\n\n"+g.q,o:g.o,c:g.c,x:g.x,ln:g.ln,pt:6})}
+ const o1=m2Order(t);o1.pt=6;qs.push(o1);
+ const P=READ[RC2[t%RC2.length]];
+ P.q.slice(0,2).forEach((pq,i)=>{const other=P.q[1-i].o.find(o=>!pq.o.includes(o))||"글쓴이는 한국에 산 적이 없습니다.";
+  const opts=shuffle([...pq.o,other]);qs.push({tp:"R",sec:"읽기",pi:RC2[t%RC2.length],q:pq.q,o:opts,c:opts.indexOf(pq.o[pq.a]),pt:6})});
+ const o2=m2Order(t+5);o2.pt=6;qs.push(o2);
  return qs}
-function startMock(t){mk={t,qs:buildMock(t),i:-1,ans:{},plays:{},start:Date.now(),done:false};go("mock")}
-function mkPick(oi){mk.ans[mk.i]=oi;render()}
-function mkNext(){if(mk.i<mk.qs.length-1){mk.i++;render();window.scrollTo(0,0)}else mkFinish()}
-function mkPlay(){const n=mk.plays[mk.i]||0;if(n>=2)return;mk.plays[mk.i]=n+1;speak(mk.qs[mk.i].au);render()}
-function mkFinish(){mk.done=true;let sc2=0;mk.qs.forEach((q,i)=>{if(mk.ans[i]===q.a)sc2+=10});mk.score=sc2;
- const best=S.mock[mk.t]||{best:0};S.mock[mk.t]={best:Math.max(best.best||0,sc2),last:sc2,d:Date.now()};S.xp+=Math.round(sc2/5);touchStreak();save();render()}
+function startMock(t){MK={t,phase:"intro",qs:m2Build(t),i:0,ans:{},plays:{},w51:"",w53:"",wRes:null,obj:0,secs:{L:0,R:0,W:0},deadline:0};go("mock")}
+function m2Begin(){MK.phase="test";MK.deadline=Date.now()+20*60*1000;
+ if(MKIV)clearInterval(MKIV);
+ MKIV=setInterval(()=>{if(route.v!=="mock"||!MK||MK.phase!=="test"){clearInterval(MKIV);return}
+  const r=MK.deadline-Date.now();const el=document.getElementById("mtmr");
+  if(el){const s=Math.max(0,Math.floor(r/1000));el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");el.style.color=r<180000?"var(--red)":"var(--muted)"}
+  if(r<=0){clearInterval(MKIV);m2Submit()}},1000);
+ render()}
+function m2Play(){const q=MK.qs[MK.i];const n=MK.plays[MK.i]||0;if(n>=q.max)return;MK.plays[MK.i]=n+1;speak(q.au);render()}
+function m2Pick(oi){MK.ans[MK.i]=oi;render()}
+function m2Nav(d){MK.i=Math.max(0,Math.min(MK.qs.length-1,MK.i+d));render();window.scrollTo(0,0)}
+async function m2Submit(){if(MK.phase!=="test")return;clearInterval(MKIV);
+ let L=0,R=0;MK.qs.forEach((q,i)=>{if(MK.ans[i]===q.c){if(q.sec==="듣기")L+=q.pt;else R+=q.pt}});
+ MK.secs={L,R,W:0};MK.obj=L+R;
+ const hasW=(MK.w51.trim().length>=3||MK.w53.trim().length>=20)&&S.akey;
+ if(hasW){MK.phase="grading";render();
+  try{const w5=W512[MK.t%10],w3=W532[MK.t%10];
+   const res=await callClaude(
+`Bạn là giám khảo TOPIK II chấm trình độ mục tiêu CẤP 3. Chấm 2 bài. CHỈ trả JSON: {"w51":{"score":0-8,"fix":"câu mẫu tự nhiên","why":"VN 1 câu"},"w53":{"score":0-12,"c":0-4,"o":0-4,"l":0-4,"why":"nhận xét VN 2-3 ý ngắn","fix":"1-2 chỗ sửa tiêu biểu dạng sai→đúng"}}. Tiêu chí 53: c=nội dung đủ ý, o=mạch lạc, l=ngữ pháp/từ vựng đúng cấp 3 (chia động từ sai trừ mạnh).`,
+`[제${MK.t+1}회] [51] Văn cảnh: ${w5.t}\nĐáp án mẫu: ${w5.m}\nHọc viên viết: ${MK.w51||"(bỏ trống)"}\n\n[53] Đề: ${w3.t} · Yêu cầu: ${w3.b} · Ngữ pháp gợi ý: ${w3.g} · 120~180자\nBài viết: ${MK.w53||"(bỏ trống)"}`,700);
+   MK.wRes=res;MK.secs.W=Math.min(20,(res.w51&&res.w51.score||0)+(res.w53&&res.w53.score||0))}
+  catch(e){MK.wRes={err:e.message}}}
+ MK.score=MK.obj+MK.secs.W;MK.phase="done";
+ const full=hasW&&MK.wRes&&!MK.wRes.err;
+ if(full){if(MK.score>=70)S.g70=(S.g70||0)+1;S.wBest=Math.max(S.wBest||0,MK.secs.W)}
+ const best=S.mock[MK.t]||{best:0};S.mock[MK.t]={best:Math.max(best.best||0,MK.score),last:MK.score,d:Date.now()};
+ S.xp+=Math.round(MK.score/5);touchStreak();save();render()}
 /* ===== QUIZ ===== */
 let qz=null;
 function startQuiz(l){let pool=lessonVocab(l,S.incExp),gs=LS[l-1].g.map(g=>({...g,ln:l}));
@@ -517,14 +571,14 @@ let G=null,rp=null,rf="all";
 function openPassage(pi){rp={pi,act:"read",ans:{},hFound:{},hi:0,cl:null,ci:0,cAns:null,cok:0,ord:null};G=null;go("passage",pi)}
 function setAct(a){rp.act=a;G=null;
  if(a==="cloze"&&!rp.cl){rp.cl=mkCloze(READ[rp.pi]);rp.ci=0;rp.cAns=null;rp.cok=0}
- if(a==="order"&&!rp.ord){const n=READ[rp.pi].s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null}}
+ if(a==="order"&&!rp.ord){const n=READ[rp.pi].s.length;rp.ord={perm:mkPerm(n),chosen:[],state:null}}
  render()}
-function showG(pi,si,ti){const t=READ[pi].s[si][ti];G={w:t[0].replace(/[.,!?]$/,""),g:t[1]};renderGloss()}
+function showG(pi,si,ti){const t=READ[pi].s[si][ti];G={w:t[0].replace(/[.,!?]$/,"").replace(/['"]/g,""),g:t[1]};renderGloss()}
 function hideG(){G=null;renderGloss()}
 function renderGloss(){const el=document.getElementById("glossbar");
  if(!G||route.v!=="passage"){el.style.display="none";return}
  el.style.display="flex";
- el.innerHTML=`<div class="in"><b>${G.w}</b><span class="g">${G.g}</span><button class="spk" style="background:rgba(255,255,255,.15);border:none;color:#fff" onclick="speak('${G.w}')">🔊</button><button style="background:none;border:none;color:#fff;font-size:17px;padding:4px" onclick="hideG()">✕</button></div>`}
+ el.innerHTML=`<div class="in"><b>${G.w}</b><span class="g">${G.g}</span><button class="spk" style="background:rgba(255,255,255,.15);border:none;color:#fff" onclick="speak('${G.w.replace(/'/g,"")}')">🔊</button><button style="background:none;border:none;color:#fff;font-size:17px;padding:4px" onclick="hideG()">✕</button></div>`}
 function tapTok(pi,si,ti){const t=READ[pi].s[si][ti];
  if(rp.act==="hunt"){const hs=HUNT[pi]||[];const h=hs[rp.hi];if(!h){showG(pi,si,ti);return}
   if(h.a.includes(t[0])){rp.hFound[si+"-"+ti]=1;rp.hi++;const gm=GALL.find(x=>x.f===h.f);G={w:t[0],g:"✅ "+h.f+(gm?" — "+gm.s:"")};
@@ -548,10 +602,10 @@ function odUndo(i){if(rp.ord.state)return;rp.ord.chosen.splice(i,1);render()}
 function odCheck(){const ok=rp.ord.chosen.every((v,i)=>v===i);rp.ord.state=ok?"ok":"no";
  if(ok){S.read[rp.pi]=S.read[rp.pi]||{};if(!S.read[rp.pi].order){S.read[rp.pi].order=1;S.xp+=10}}
  touchStreak();save();render()}
-function odRetry(){const n=READ[rp.pi].s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null};render()}
+function odRetry(){const n=READ[rp.pi].s.length;rp.ord={perm:mkPerm(n),chosen:[],state:null};render()}
 function sentTxt(P,si){return P.s[si].map(t=>t[0]).join(" ")}
 function linesHTML(pi){const P=READ[pi];
- return P.s.map((sn,si)=>`<div class="rline"><button class="spk" style="width:30px;height:30px;font-size:12px" onclick="spk(event,'${sentTxt(P,si).replace(/'/g,"")}')">🔊</button>
+ return P.s.map((sn,si)=>`<div class="rline"><button class="spk" style="width:30px;height:30px;font-size:12px" onclick="spk(event,'${sentTxt(P,si).replace(/['"]/g,"")}')">🔊</button>
  <div class="rtxt">${sn.map((t,ti)=>{const found=rp.hFound[si+"-"+ti];const sp=t[0].endsWith(":");
  return `<span class="tok" style="${found?"background:var(--okbg);color:var(--green);font-weight:700":""}${sp?";font-weight:700;color:#8a6a4f":""}" onclick="tapTok(${pi},${si},${ti})">${t[0]}</span>`}).join(" ")}</div></div>`).join("")}
 /* ===== AI ===== */
@@ -569,12 +623,28 @@ function wStarter(s){wr.text=(wr.text?wr.text+" ":"")+s;render()}
 function wDraft(){const t=wr.ans.filter(a=>a.trim()).join(" ");
  if(!t){wr.err="Trả lời ít nhất 1-2 câu hỏi nhé 🙂";render();return}
  wr.text=wr.text?wr.text+" "+t:t;wr.mode="free";wr.err=null;render()}
-async function callClaude(sys,user,maxTok){
- const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.akey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:S.amodel||"claude-sonnet-4-5",max_tokens:maxTok,system:sys,messages:[{role:"user",content:user}]})});
- if(!r.ok)throw new Error(r.status===401?"API key sai. Kiểm tra ở ⚙️.":"Lỗi "+r.status);
- const d=await r.json();S.api=(S.api||0)+1;save();
- const m=d.content[0].text.match(/\{[\s\S]*\}/);return JSON.parse(m[0])}
-function addNote(ko,why,key){S.notes=S.notes||[];S.notes.unshift({ko,why:why||"",ts:Date.now()});wr.saved[key]=1;save();render()}
+function hashS(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return"h"+(h>>>0).toString(36)}
+function deepClean(o){if(typeof o==="string")return o.replace(/[<>]/g," ");if(Array.isArray(o))return o.map(deepClean);if(o&&typeof o==="object"){const r={};for(const k in o)r[k]=deepClean(o[k]);return r}return o}
+async function callClaude(sys,user,maxTok,noCache){
+ S.aiCache=S.aiCache||{};const ck=hashS((S.amodel||"")+"|"+sys+"|"+user);
+ if(!noCache&&S.aiCache[ck])return S.aiCache[ck];
+ let r=null;
+ for(let a=0;a<2;a++){
+  try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.akey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:S.amodel||"claude-sonnet-4-5",max_tokens:maxTok,system:sys,messages:[{role:"user",content:user}]})})}
+  catch(e){r=null}
+  if(r&&r.ok)break;
+  if(r&&r.status===401)throw new Error("API key sai. Kiểm tra ở ⚙️.");
+  if(a===1)throw new Error(r?("Lỗi máy chủ ("+r.status+") — thử lại sau nhé."):"Mạng lỗi — kiểm tra kết nối rồi bấm thử lại.");
+  await new Promise(z=>setTimeout(z,800))}
+ const d=await r.json();S.api=(S.api||0)+1;
+ const m=((d.content&&d.content[0]&&d.content[0].text)||"").match(/\{[\s\S]*\}/);
+ if(!m){save();throw new Error("AI trả về sai định dạng — bấm thử lại.")}
+ let out;try{out=deepClean(JSON.parse(m[0]))}catch(e){save();throw new Error("AI trả về sai định dạng — bấm thử lại.")}
+ if(!noCache){S.aiCache[ck]=out;const ks=Object.keys(S.aiCache);if(ks.length>24)delete S.aiCache[ks[0]]}
+ save();return out}
+function addNote(ko,why,key){S.notes=S.notes||[];S.notes.unshift({ko:String(ko),why:String(why||""),ts:Date.now()});if(key)wr.saved[key]=1;save();render()}
+function addNoteG(i){const it=wr.gym&&wr.gym.items&&wr.gym.items[i];if(it)addNote(it.fixed||it.model||"",it.why,"g"+i)}
+function addNoteC(i){const c=wr.res&&wr.res.corrections&&wr.res.corrections[i];if(c)addNote(c.fix||"",c.why,"c"+i)}
 function delNote(i){S.notes.splice(i,1);save();render()}
 function startNoteScram(){const ns=(S.notes||[]).filter(x=>x.ko.split(" ").length>=3);
  if(!ns.length){alert("Sổ còn trống. Lưu câu từ phần chấm AI nhé.");return}
@@ -604,12 +674,17 @@ async function genRead(){if(rg.busy)return;
  const l=parseInt(document.getElementById("rgl").value)||1;const o=LS[l-1];
  rg.busy=true;rg.err=null;render();
  const voc=shuffle(o.c.map(x=>x[0])).slice(0,6).join(", ");
- try{const p=await callClaude(`Tạo bài đọc tiếng Hàn TOPIK3. CHỈ JSON: {"t":"tiêu đề Hàn","ty":"story","s":[[["토큰","nghĩa VN 1-3 từ"],...],...],"q":[{"q":"câu hỏi Hàn","o":["đúng","sai","sai"],"a":0},{...}]}. 5-7 câu; token tách theo dấu cách, GIỮ dấu câu dính token; thể loại ngẫu nhiên; tự nhiên.`,`Bài ${l}과 — ${o.tp}. NP: ${o.g.map(g=>g.f).join(", ")}. Từ: ${voc}. Tình huống MỚI.`,1600);
+ try{const p=await callClaude(`Tạo bài đọc tiếng Hàn TOPIK3. CHỈ JSON: {"t":"tiêu đề Hàn","ty":"story","s":[[["토큰","nghĩa VN 1-3 từ"],...],...],"q":[{"q":"câu hỏi Hàn","o":["đúng","sai","sai"],"a":0},{...}]}. 5-7 câu; token tách theo dấu cách, GIỮ dấu câu dính token; thể loại ngẫu nhiên; tự nhiên.`,`Bài ${l}과 — ${o.tp}. NP: ${o.g.map(g=>g.f).join(", ")}. Từ: ${voc}. Tình huống MỚI, khác các lần trước. (seed ${Date.now()%100000})`,1600,true);
   if(!p.s||!p.s.length||!p.q)throw new Error("Kết quả lỗi, thử lại nhé.");
-  p.l=l;p.ty=p.ty||"story";p.t="✨ "+(p.t||"AI");
+  p.s=p.s.map(sn=>sn.map(t=>[String(t[0]||"").replace(/['"`]/g,""),String(t[1]||"—").replace(/['"`]/g,"")]));
+  p.l=l;p.ty=p.ty||"story";p.t="✨ "+String(p.t||"AI").replace(/['"`]/g,"");
   p.q=p.q.slice(0,2).map(q=>{const corr=q.o[q.a||0];const o2=shuffle([...q.o]);return{q:q.q,o:o2,a:o2.indexOf(corr)}});
   S.myReads.push(p);READ.push(p);save();rg.busy=false;openPassage(READ.length-1)}
  catch(e){rg.err=e.message;rg.busy=false;render()}}
+/* ===== HOME HELPERS ===== */
+function weakForm(){let w=-1,best=0;for(const k in S.cj){const s=S.cj[k];if(s.o+s.b>=4){const r=(s.b+1)/(s.o+1);if(r>best){best=r;w=+k}}}return w}
+function nextPassage(){for(let i=0;i<READ.length;i++){if(!(S.read[i]&&S.read[i].done))return i}return -1}
+function lastMockDays(){let m=0;for(const k in S.mock){m=Math.max(m,S.mock[k].d||0)}return m?Math.floor((Date.now()-m)/864e5):99}
 /* ===== VIEWS ===== */
 function vrows(list){return list.map(v=>{const m=mast(v.id);return `<div class="vrow" onclick="this.classList.toggle('open')"><span class="dot" style="background:${MLBL[m][1]}"></span><div style="flex:1;min-width:0"><div class="vko">${v.ko}</div><div class="vvi">${v.vi}</div></div><button class="spk" onclick="spk(event,'${v.ko}')">🔊</button></div>`}).join("")}
 function render(){
@@ -624,7 +699,11 @@ function render(){
  if(route.v==="dict"&&dt&&dt.i<dt.list.length&&!dt.ans&&dt.spokenIdx!==dt.i){dt.spokenIdx=dt.i;setTimeout(()=>speak(dtQ().ko),350)}}
 function vHome(){const due=dueIds().length;const last=S.last?LS[S.last-1]:null;
  const total=LS.reduce((a,o)=>a+o.c.length,0);const mastered=LS.flatMap(o=>lessonVocab(o.n,false)).filter(v=>mast(v.id)>=4).length;
- const rdone=Object.values(S.read).filter(r=>r.done).length;const mocks=Object.keys(S.mock).length;
+ const rdone=Object.values(S.read).filter(r=>r.done).length;
+ const wf=weakForm(),np=nextPassage(),md=lastMockDays();
+ let to=0,tb=0,nf=0;for(let f=0;f<FR.length;f++){const s=(S.cjT||{})[String(f)];if(s&&s.o+s.b>=3){nf++;to+=s.o;tb+=s.b}}
+ const acc=(to+tb)?Math.round(to/(to+tb)*100):0;
+ const needBak=S.xp>150&&(!S.lastExp||Date.now()-S.lastExp>7*864e5);
  return `<div class="pagehead"><div style="flex:1"><h1>안녕하세요 👋</h1><div class="sub">세종한국어 3B · Trung cấp 1</div></div></div>
  <div class="card"><div style="display:flex;gap:12px">
   <div style="flex:1"><div class="sub">🔥 Chuỗi</div><div class="serif" style="font-size:23px">${S.streak}일</div></div>
@@ -635,9 +714,20 @@ function vHome(){const due=dueIds().length;const last=S.last?LS[S.last-1]:null;
  <div class="card"><div style="font-weight:700">오늘의 복습 · Ôn hôm nay</div>
   <div class="sub" style="margin:2px 0 12px">${due?due+" thẻ đang chờ.":"Xong rồi! Đọc bài hoặc luyện chia động từ nhé 🌿"}</div>
   ${due?`<button class="btn primary" onclick="startSmart(null)">Bắt đầu ôn · ${due}장</button>`:`<button class="btn ghost" onclick="startConj(0)">🔤 Luyện chia động từ</button>`}
-  <div class="row2 mt"><button class="btn sm" onclick="startConj(0)">🔤 활용 훈련</button><button class="btn sm" onclick="go('mocklist')">🎓 TOPIK 모의고사</button></div></div>
+  ${wf>=0?`<button class="btn sm ghost mt" onclick="startConj(0)">🎯 Mẫu hay sai nhất: ${FR[wf][1]}</button>`:""}
+  ${np>=0?`<button class="btn sm ghost mt" onclick="openPassage(${np})">📖 Bài đọc tiếp theo: ${READ[np].t}</button>`:""}
+  <div class="row2 mt"><button class="btn sm" onclick="startConj(0)">🔤 활용 훈련</button><button class="btn sm" onclick="go('mocklist')">🎓 TOPIK 모의고사</button></div>
+  ${md>=7?`<div class="hint mt">🎓 ${md===99?"Chưa thi thử lần nào":"Đã "+md+" ngày chưa thi thử"} — làm 1 đề cuối tuần nhé.</div>`:""}</div>
+ ${needBak?`<div class="card" style="background:var(--accent-soft)"><b>💾 Hơn 7 ngày chưa sao lưu</b><div class="sub" style="margin-top:2px">Safari có thể tự xóa dữ liệu web — xuất file để giữ tiến độ.</div><button class="btn sm mt" onclick="exportData()">Xuất sao lưu ngay</button></div>`:""}
  ${last?`<div class="card" onclick="go('lesson',${last.n})" style="cursor:pointer"><div class="sub">Học tiếp</div><div style="font-weight:700;margin:2px 0 8px">${last.n}과 · ${last.tp}</div><div class="bar"><i style="width:${Math.round(lessonProg(last.n)*100)}%"></i></div></div>`:""}
  <button class="btn ghost" onclick="go('help')">📘 Hướng dẫn sử dụng (Tiếng Việt)</button>
+ <div class="sec">🎯 Cổng sang 4A (đo bằng dữ liệu thật)</div>
+ <div class="card">
+  <div class="stat"><span>Mock ≥70/100 (đủ cả 쓰기)</span><span class="pill">${S.g70||0}/3 lần</span></div>
+  <div class="stat"><span>Gõ chia động từ ≥90%</span><span class="pill">${acc}% · ${nf}/14 mẫu</span></div>
+  <div class="stat"><span>쓰기 mock ≥16/20</span><span class="pill">${S.wBest||0}/20</span></div>
+  <div class="hint">Cổng thứ 4 (đọc bài mới, tra nghĩa dưới 30% số từ) — tự đánh giá khi đọc.</div>
+ </div>
  <div class="sec">Tiến độ theo chủ đề</div>
  <div class="card">${THEMES.map((t,i)=>{const ls2=LS.filter(o=>o.th===i);const p=ls2.reduce((a,o)=>a+lessonProg(o.n),0)/ls2.length;
  return `<div class="stat"><div><b>${i+1}. ${t[0]}</b><div class="sub" style="font-size:13px">${t[1]}</div></div><div style="width:70px"><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div></div></div>`}).join("")}</div>
@@ -674,7 +764,7 @@ function vPractice(){const due=dueIds().length;
  return `<div class="pagehead"><div style="flex:1"><h1>Luyện tập</h1><div class="sub">Đổi dạng bài liên tục mới nhớ lâu</div></div></div>
  <button class="modecard" onclick="startSmart(null)" ${due?"":"disabled"}><span class="micon">🧠</span><span style="flex:1"><span class="mtit">스마트 복습 · Ôn SRS</span><br><span class="msub">${due?due+" thẻ · trắc nghiệm→lật→gõ":"Chưa có thẻ đến hạn"}</span></span>${due?`<span class="pill">${due}</span>`:""}</button>
  <button class="modecard" onclick="startConj(0)"><span class="micon">🔤</span><span style="flex:1"><span class="mtit">활용 훈련 · Chia động từ</span><br><span class="msub">공부하다→공부해/했어요/하고 싶어요 · bất quy tắc ㅂㄷ르ㅡㄹ · máy ưu tiên mẫu bạn hay sai</span></span></button>
- <button class="modecard" onclick="go('mocklist')"><span class="micon">🎓</span><span style="flex:1"><span class="mtit">TOPIK 모의고사 · Thi thử</span><br><span class="msub">10 đề · nghe/ngữ pháp/chia ĐT/đọc · chấm /100</span></span></button>
+ <button class="modecard" onclick="go('mocklist')"><span class="micon">🎓</span><span style="flex:1"><span class="mtit">TOPIK 모의고사 · Thi thử</span><br><span class="msub">10 đề · nghe/đọc/viết · ⏱ 20 phút · chấm /100</span></span></button>
  <button class="modecard" onclick="startScram(null,false)"><span class="micon">🧩</span><span style="flex:1"><span class="mtit">문장 만들기 · Ghép câu</span><br><span class="msub">Luyện trật tự SOV</span></span></button>
  <button class="modecard" onclick="startScram(null,true)"><span class="micon">🎧</span><span style="flex:1"><span class="mtit">듣고 만들기 · Nghe & ghép</span><br><span class="msub">Nghe rồi ghép lại</span></span></button>
  <button class="modecard" onclick="startDict()"><span class="micon">⌨️</span><span style="flex:1"><span class="mtit">받아쓰기 · Nghe–chép</span><br><span class="msub">Nghe và gõ nguyên câu</span></span></button>
@@ -705,7 +795,7 @@ function vRead(){const types=[["all","Tất cả"],["story","Truyện"],["dlg","
  <div class="card"><b>✨ Tạo bài đọc mới bằng AI</b><div class="sub" style="margin-top:2px">Chọn bài → nhận văn bản mới, lưu vĩnh viễn · 1 lần gọi API</div>
  <div style="display:flex;gap:8px;margin-top:10px"><select id="rgl" class="tinput" style="flex:1;margin:0;min-height:44px">${LS.map(o=>`<option value="${o.n}">${o.n}과 · ${o.tp}</option>`).join("")}</select>
  <button class="btn sm primary" style="width:auto;padding:0 18px;flex:none" ${rg.busy?"disabled":""} onclick="genRead()">${rg.busy?"...":"Tạo"}</button></div>
- ${rg.busy?`<div class="center mt"><div class="spin"></div></div>`:""}${rg.err?`<div class="expl bad mt">⚠️ ${rg.err}</div>`:""}</div>
+ ${rg.busy?`<div class="center mt"><div class="spin"></div></div>`:""}${rg.err?`<div class="expl bad mt">⚠️ ${rg.err} <button class="btn sm ghost mt" onclick="genRead()">Thử lại</button></div>`:""}</div>
  <div style="display:flex;gap:7px;margin-bottom:12px">${types.map(t=>`<button class="btn sm ${rf===t[0]?"primary":""}" style="width:auto;flex:1" onclick="rf='${t[0]}';render()">${t[1]}</button>`).join("")}</div>
  ${READ.map((P,pi)=>({P,pi})).filter(x=>rf==="all"||(x.P.ty||"story")===rf).map(({P,pi})=>{
  const st=S.read[pi]||{};const total=(HUNT[pi]&&HUNT[pi].length)?4:3;
@@ -714,7 +804,7 @@ function vRead(){const types=[["all","Tất cả"],["story","Truyện"],["dlg","
  return `<button class="modecard" onclick="openPassage(${pi})"><span class="micon">${done>=total?"✅":icon}</span><span style="flex:1"><span class="mtit">${P.t}</span><br><span class="msub">${P.l}과 · hoạt động ${done}/${total}</span></span><span style="color:var(--muted)">›</span></button>`}).join("")}`}
 function vPassage(pi){const P=READ[pi];if(!rp||rp.pi!==pi)rp={pi,act:"read",ans:{},hFound:{},hi:0,cl:null,ci:0,cAns:null,cok:0,ord:null};
  const hs=HUNT[pi]||[];const st=S.read[pi]||{};
- const acts=[["read","📖 Đọc",1],["q","❓ Câu hỏi",st.done],...(hs.length?[["hunt","🔍 Tìm NP",st.hunt]]:[]),["cloze","🧩 Điền",st.cloze],["order","↕ Sắp xếp",st.order]];
+ const acts=[["read","📖 Đọc",0],["q","❓ Câu hỏi",st.done],...(hs.length?[["hunt","🔍 Tìm NP",st.hunt]]:[]),["cloze","🧩 Điền",st.cloze],["order","↕ Sắp xếp",st.order]];
  let body="";
  if(rp.act==="read"){body=`<div class="hint">Chạm từ chưa biết — nghĩa tiếng Việt hiện bên dưới.</div><div class="card">${linesHTML(pi)}</div><button class="btn ghost" onclick="setAct('q')">Đọc xong → làm câu hỏi</button>`}
  else if(rp.act==="q"){body=P.q.map((q,qi)=>{const an=rp.ans[qi];
@@ -730,7 +820,7 @@ function vPassage(pi){const P=READ[pi];if(!rp||rp.pi!==pi)rp={pi,act:"read",ans:
  <div class="card"><div class="rtxt" style="font-size:18px;line-height:2">${sn.map((t,ti)=>ti===c.ti?`<span style="background:var(--accent-soft);border-radius:8px;padding:2px 12px;color:var(--accent);font-weight:700">____</span>`:`<span class="tok" onclick="tapTok(${pi},${c.si},${ti})">${t[0]}</span>`).join(" ")}</div></div>
  ${c.opts.map((o,oi)=>{let c2="opt";if(rp.cAns!==null){if(o===c.w)c2+=" ok";else if(oi===rp.cAns)c2+=" no"}return `<button class="${c2}" ${rp.cAns!==null?"disabled":""} onclick="clPick(${oi})">${o}</button>`}).join("")}
  ${rp.cAns!==null?`<button class="btn primary" onclick="clNext()">${rp.ci+1>=rp.cl.length?"Kết quả":"Tiếp"}</button>`:""}`}}
- else{if(!rp.ord){const n=P.s.length;rp.ord={perm:shuffle([...Array(n).keys()]),chosen:[],state:null}}
+ else{if(!rp.ord){const n=P.s.length;rp.ord={perm:mkPerm(n),chosen:[],state:null}}
  const rem=rp.ord.perm.filter(k=>!rp.ord.chosen.includes(k));
  body=`<div class="hint">Chạm các câu theo đúng thứ tự mạch văn.</div>
  <div class="ansline">${rp.ord.chosen.map((k,i)=>`<button class="opt" style="margin-bottom:6px;font-size:14px" onclick="odUndo(${i})"><b>${i+1}.</b> ${sentTxt(P,k)}</button>`).join("")||`<span class="hint">Chọn câu đầu tiên</span>`}</div>
@@ -739,7 +829,7 @@ function vPassage(pi){const P=READ[pi];if(!rp||rp.pi!==pi)rp={pi,act:"read",ans:
  :rp.ord.state==="no"?`<div class="expl bad">❌ Chưa đúng. Chú ý từ nối 그리고·그런데·그래서.</div><button class="btn primary" onclick="odRetry()">Thử lại</button>`
  :`<button class="btn primary mt" ${rp.ord.chosen.length===P.s.length?"":"disabled"} onclick="odCheck()">Kiểm tra</button>`}`}
  return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:19px">${P.t}</h1><div class="sub">${P.l}과</div></div>
- <button class="spk" onclick="spk(event,'${P.s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ").replace(/'/g,"")}')">🔊</button></div>
+ <button class="spk" onclick="spk(event,'${P.s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ").replace(/['"]/g,"")}')">🔊</button></div>
  <div style="display:flex;gap:7px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px">${acts.map(a=>`<button class="btn sm ${rp.act===a[0]?"primary":""}" style="width:auto;flex:none;padding:0 13px" onclick="setAct('${a[0]}')">${a[1]}${a[2]?" ✓":""}</button>`).join("")}</div>${body}`}
 function vConj(){if(!cj)return vPractice();
  if(cj.i>=cj.items.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>Hoàn thành</h1></div>
@@ -759,38 +849,56 @@ function vConj(){if(!cj)return vPractice();
  :it.typing?`<input class="tinput" type="text" placeholder="Gõ dạng đã chia..." value="${cj.typed.replace(/"/g,"")}" oninput="cj.typed=this.value" onkeydown="if(event.key==='Enter')cjSubmit()" autocapitalize="off" autocorrect="off" autocomplete="off">
  <button class="btn primary" onclick="cjSubmit()">Kiểm tra</button><p class="hint center mt">Bạn đã khá mẫu này → nâng lên chế độ gõ ✍️</p>`
  :it.opts.map((o,i)=>`<button class="opt" onclick="cjPick(${i})">${(w.pre||"")+o}</button>`).join("")}`}
-function vMockList(){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">🎓 TOPIK 모의고사</h1><div class="sub">10 đề · 10 câu/đề · chấm /100 · mô phỏng cấp 3</div></div></div>
- <div class="card"><div class="sub">Cấu trúc mỗi đề: 🎧 Nghe 3 câu (phát tối đa 2 lần) · 📝 Ngữ pháp–từ vựng 3 · 🔤 Chia động từ 2 · 📖 Đọc 2. Không hiện đáp án giữa chừng — nộp bài mới biết điểm, giống thi thật.</div></div>
- <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
- ${[...Array(10)].map((_,t)=>{const m=S.mock[t];return `<button class="mockn" onclick="startMock(${t})"><b>제${t+1}회</b><span class="sc">${m?"Cao nhất: "+m.best+"/100":"Chưa thi"}</span>${m&&m.best>=80?`<span>🏅</span>`:""}</button>`}).join("")}</div>
- <p class="warn mt center">Đây là bài mô phỏng theo giáo trình 3B — không phải đề TOPIK thật và không bảo đảm kết quả thi.</p>`}
-function vMock(){if(!mk)return vMockList();
- if(mk.done){const lv=mk.score>=80?"Vững vàng mức 3급 (mô phỏng) 🏅":mk.score>=60?"Tiệm cận 3급 — luyện thêm phần sai":mk.score>=40?"Cần củng cố nền tảng":"Ôn lại bài rồi thi lại nhé";
- return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>Kết quả 제${mk.t+1}회</h1></div>
- <div class="card center"><div class="bigxp">${mk.score}<span style="font-size:20px;color:var(--muted)">/100</span></div>
- <div class="sub">${lv} · ⏱ ${Math.round((Date.now()-mk.start)/60000)} phút</div></div>
+function w53cnt(el){MK.w53=el.value;const e=document.getElementById("w53c");if(e)e.textContent=el.value.replace(/\s/g,"").length+"자"}
+function vMockList(){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">🎓 TOPIK 모의고사</h1><div class="sub">Cấp 3 · 12 câu trắc nghiệm + 2 bài viết · ⏱ 20 phút</div></div></div>
+<div class="card"><div class="sub">Cấu trúc theo đề thật: 🎧 <b>듣기 4</b> (2 câu đầu nghe <b>1 lần</b>, 2 câu sau 2 lần) · 📖 <b>읽기 8</b> (chủ đề văn bản · điền khuyết · sắp xếp 가나다라 · nội dung trùng khớp — đủ ①②③④) · ✍️ <b>쓰기 2</b> (câu 51 + bài 53 rút gọn 120~180자, AI chấm rubric 내용·구성·언어사용). Hết giờ tự nộp.</div></div>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+${[...Array(10)].map((_,t)=>{const m=S.mock[t];return `<button class="mockn" onclick="startMock(${t})"><b>제${t+1}회</b><span class="sc">${m?"Cao nhất: "+m.best+"/100":"Chưa thi"}</span>${m&&m.best>=70?"<span>🏅</span>":""}</button>`}).join("")}</div>
+<p class="warn mt center">Mô phỏng theo phạm vi 3B · Điểm chỉ tham khảo, không quy đổi chính thức. Gần ngày thi hãy làm đề 기출 thật tại topik.go.kr.</p>`}
+function vMock(){if(!MK)return vMockList();
+ if(MK.phase==="intro"){const w3=W532[MK.t%10];
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>제${MK.t+1}회</h1></div>
+ <div class="card"><b>Quy chế phòng thi 📋</b><div class="sub" style="margin-top:6px">· ⏱ 20:00 đếm ngược — hết giờ <b>tự nộp</b><br>· 🎧 Câu 1–2: nghe đúng <b>1 lần</b> · Câu 3–4: tối đa 2 lần<br>· Được quay lại sửa đáp án bằng nút ← →<br>· ✍️ Cuối bài có 2 câu viết (chủ đề hôm nay: “${w3.t}”)${S.akey?"":"<br>⚠️ Chưa có API key → phần viết không được chấm (điểm tính trên 80)"}<br>· Ngồi nơi yên tĩnh, không tra từ điển 🤫</div></div>
+ <button class="btn primary" onclick="m2Begin()">시험 시작 · Bắt đầu</button>`}
+ if(MK.phase==="grading")return `<div class="pagehead"><h1>Đang chấm 쓰기...</h1></div><div class="card center"><div class="spin"></div><div class="sub mt">Giám khảo AI đang chấm theo rubric TOPIK...</div></div>`;
+ if(MK.phase==="done"){const s=MK.score;const noW=!MK.wRes||MK.wRes.err;
+ const lv=noW?(MK.obj>=56?"Nền trắc nghiệm vững cấp 3 (chưa tính 쓰기)":MK.obj>=40?"Sát ngưỡng — luyện thêm":"Cần ôn lại nền tảng")
+ :(s>=70?"Vững mức cấp 3 (mô phỏng) 🏅":s>=55?"Chạm ngưỡng cấp 3 — bù phần sai":s>=40?"Ranh giới — tập trung phần yếu":"Chưa đạt — ôn bài rồi thi lại");
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>제${MK.t+1}회 결과</h1></div>
+ <div class="card center"><div class="bigxp">${s}<span style="font-size:20px;color:var(--muted)">/${noW?80:100}</span></div><div class="sub">${lv}</div>
+ <div class="mt" style="display:flex;justify-content:center;gap:16px;font-size:14px"><span>🎧 ${MK.secs.L}/32</span><span>📖 ${MK.secs.R}/48</span><span>✍️ ${noW?"—":MK.secs.W+"/20"}</span></div></div>
+ ${MK.wRes&&!MK.wRes.err?`<div class="sec">✍️ Chấm bài viết</div>
+ <div class="card"><span class="pill">51 · ${MK.wRes.w51.score}/8</span><div class="sub mt">💡 ${MK.wRes.w51.why||""}</div><div class="gex">Mẫu: ${MK.wRes.w51.fix||W512[MK.t%10].m}</div></div>
+ <div class="card"><span class="pill">53 · ${MK.wRes.w53.score}/12</span><div class="sub mt">Nội dung ${MK.wRes.w53.c}/4 · Mạch lạc ${MK.wRes.w53.o}/4 · Ngôn ngữ ${MK.wRes.w53.l}/4</div><div class="sub mt">💡 ${MK.wRes.w53.why||""}</div>${MK.wRes.w53.fix?`<div class="gex">${MK.wRes.w53.fix}</div>`:""}</div>`:""}
  <div class="sec">Xem lại câu sai</div>
- ${mk.qs.map((q,i)=>mk.ans[i]===q.a?"":`<div class="card"><span class="pill">${q.sec}</span>
- ${q.tp==="L"?`<div class="sub mt">📜 ${q.au}</div>`:""}
- <div class="mt" style="font-weight:600">${q.q}</div>
- <div class="mt"><span class="worig">${q.o[mk.ans[i]]??"(bỏ trống)"}</span> → <span class="wfix">${q.o[q.a]}</span></div>
- ${q.x?`<div class="sub" style="margin-top:5px">💡 ${q.x}</div>`:""}
- ${q.ln?`<div class="sub">→ Ôn lại bài ${q.ln}과</div>`:""}
- ${q.tp==="R"?`<button class="btn sm ghost mt" onclick="openPassage(${q.pi})">📖 Đọc lại bài (có nghĩa từ)</button>`:""}</div>`).join("")||`<div class="card center" style="background:var(--okbg)">🎉 Không sai câu nào!</div>`}
- <div class="row2"><button class="btn" onclick="startMock(mk.t)">🔁 Thi lại</button><button class="btn primary" onclick="back()">Xong</button></div>`}
- if(mk.i<0){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>제${mk.t+1}회 모의고사</h1></div>
- <div class="card"><b>Trước khi bắt đầu</b><div class="sub" style="margin-top:6px">· 10 câu × 10 điểm<br>· Phần nghe: bấm 🔊, tối đa <b>2 lần</b>/câu<br>· Không có đáp án giữa chừng<br>· Có thể đổi lựa chọn trước khi bấm Tiếp<br>· Làm nơi yên tĩnh, như thi thật 🎧</div></div>
- <button class="btn primary" onclick="mk.i=0;render()">시작 · Bắt đầu</button>`}
- const q=mk.qs[mk.i];const sel=mk.ans[mk.i];const plays=mk.plays[mk.i]||0;
- return `<div class="pagehead"><button class="backbtn" onclick="if(confirm('Thoát? Bài thi sẽ mất.'))back()">✕</button>
- <div style="flex:1"><div class="bar"><i style="width:${Math.round(mk.i/mk.qs.length*100)}%"></i></div></div><span class="pill">${mk.i+1}/10 · ${q.sec}</span></div>
- ${q.tp==="R"?`<div class="card" style="max-height:220px;overflow-y:auto"><div style="line-height:1.9;font-size:16px">${READ[q.pi].s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ")}</div></div>`:""}
- ${q.tp==="L"?`<div class="qprompt"><div class="tag">🎧 Nghe (còn ${2-plays} lượt)</div>
- <button class="btn sm ${plays>=2?"":"primary"}" style="max-width:170px;margin:0 auto" ${plays>=2?"disabled":""} onclick="mkPlay()">🔊 ${plays===0?"Phát":"Nghe lại"}</button>
+ ${MK.qs.map((q,i)=>MK.ans[i]===q.c?"":`<div class="card"><span class="pill">${q.sec} ${i+1}</span>
+ ${q.tp==="L"?`<div class="sub mt">📜 ${q.au} <button class="spk" style="display:inline-flex;width:28px;height:28px;font-size:11px" onclick="spk(event,'${q.au.replace(/'/g,"")}')">🔊</button></div>`:""}
+ <div class="mt" style="font-weight:600;white-space:pre-line">${q.q}</div>
+ ${q.lines?`<div class="sub mt">${q.lines.join("<br>")}</div>`:""}
+ <div class="mt"><span class="worig">${q.o[MK.ans[i]]??"(bỏ trống)"}</span> → <span class="wfix">${q.o[q.c]}</span></div>
+ ${q.x?`<div class="sub" style="margin-top:5px">💡 ${q.x}</div>`:""}${q.ln?`<div class="sub">→ Ôn bài ${q.ln}과</div>`:""}
+ ${q.pi!==undefined?`<button class="btn sm ghost mt" onclick="openPassage(${q.pi})">📖 Đọc lại (có nghĩa từ)</button>`:""}</div>`).join("")||`<div class="card center" style="background:var(--okbg)">🎉 Trắc nghiệm đúng hết!</div>`}
+ <div class="row2"><button class="btn" onclick="startMock(MK.t)">🔁 Thi lại</button><button class="btn primary" onclick="back()">Xong</button></div>`}
+ const N=MK.qs.length;
+ if(MK.i>=N){const w5=W512[MK.t%10],w3=W532[MK.t%10];
+ return `<div class="pagehead"><span class="pill">✍️ 쓰기</span><div style="flex:1"></div><span class="pill" id="mtmr">--:--</span></div>
+ <div class="card"><b>51.</b> ㉠에 들어갈 알맞은 말을 <b>한 문장</b>으로 쓰십시오. (8점)<div class="gex" style="white-space:pre-line">${w5.t}</div><div class="hint">Gợi ý: ${w5.h}</div>
+ <input class="tinput" type="text" placeholder="㉠ = ..." value="${MK.w51.replace(/"/g,"")}" oninput="MK.w51=this.value"></div>
+ <div class="card"><b>53.</b> 다음을 참고하여 <b>120~180자</b>로 쓰십시오. (12점)<div class="gex"><b>${w3.t}</b><div class="sub" style="white-space:pre-line;margin-top:4px">${w3.b}</div><div class="sub mt">권장 문법: ${w3.g}</div></div>
+ <textarea class="tinput" placeholder="여기에 쓰십시오..." oninput="w53cnt(this)">${MK.w53}</textarea>
+ <div class="hint" id="w53c">${MK.w53.replace(/\s/g,"").length}자</div></div>
+ <div class="row2"><button class="btn" onclick="MK.i=${N-1};render()">← Câu ${N}</button><button class="btn primary" onclick="m2Submit()">제출 · Nộp bài</button></div>`}
+ const q=MK.qs[MK.i];const sel=MK.ans[MK.i];const plays=MK.plays[MK.i]||0;
+ return `<div class="pagehead"><button class="backbtn" onclick="if(confirm('Thoát? Bài thi sẽ mất.')){clearInterval(MKIV);MK=null;back()}">✕</button>
+ <div style="flex:1"><div class="bar"><i style="width:${Math.round(MK.i/(N+1)*100)}%"></i></div></div>
+ <span class="pill">${MK.i+1}/${N} · ${q.sec}</span><span class="pill" id="mtmr">--:--</span></div>
+ ${(q.tp==="T"||q.tp==="R")?`<div class="card" style="max-height:210px;overflow-y:auto"><div style="line-height:1.85;font-size:15.5px">${READ[q.pi].s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ")}</div></div>`:""}
+ ${q.tp==="L"?`<div class="qprompt"><div class="tag">🎧 ${q.max===1?"CHỈ NGHE 1 LẦN":"tối đa 2 lần"} · còn ${q.max-plays}</div>
+ <button class="btn sm ${plays>=q.max?"":"primary"}" style="max-width:170px;margin:0 auto" ${plays>=q.max?"disabled":""} onclick="m2Play()">🔊 ${plays===0?"재생":"다시 듣기"}</button>
  <div class="qmid mt" style="font-size:16.5px">${q.q}</div></div>`
- :`<div class="qprompt"><div class="qmid" style="font-size:17.5px">${q.q}</div></div>`}
- ${q.o.map((o,i)=>`<button class="opt ${sel===i?"pick":""}" onclick="mkPick(${i})">${"①②③④"[i]} ${o}</button>`).join("")}
- <button class="btn primary mt" ${sel===undefined?"disabled":""} onclick="mkNext()">${mk.i===9?"제출 · Nộp bài":"Tiếp →"}</button>`}
+ :`<div class="qprompt"><div class="qmid" style="font-size:16.5px;white-space:pre-line">${q.q}</div>${q.lines?`<div class="mt" style="text-align:left;font-size:15px;line-height:1.9;background:var(--soft);border-radius:12px;padding:10px 12px">${q.lines.join("<br>")}</div>`:""}</div>`}
+ ${q.o.map((o,i)=>`<button class="opt ${sel===i?"pick":""}" onclick="m2Pick(${i})">${"①②③④"[i]} ${o}</button>`).join("")}
+ <div class="row2 mt"><button class="btn" ${MK.i===0?"disabled":""} onclick="m2Nav(-1)">← Trước</button><button class="btn primary" onclick="${MK.i===N-1?("MK.i="+N+";render()"):"m2Nav(1)"}">${MK.i===N-1?"→ Phần 쓰기":"Tiếp →"}</button></div>`}
 function vDict(){if(!dt)return vPractice();
  if(dt.i>=dt.list.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>Hoàn thành</h1></div>
  <div class="card center"><div class="bigxp">${dt.ok}<span style="font-size:22px;color:var(--muted)">/${dt.list.length}</span></div><div class="sub">Nghe và gõ = luyện nghe sâu nhất.</div></div>
@@ -819,7 +927,7 @@ function vWrite(n){const o=n?LS[n-1]:null;const g=WGUIDE[n||0];wInit(n||0);
  ${it.status==="fix"?`<div style="margin-top:4px"><span class="worig">${m.text}</span><br>→ <span class="wfix">${it.fixed||""}</span></div>`:""}
  ${it.status==="off"?`<div style="margin-top:4px">Mẫu: <b>${it.model||""}</b></div>`:""}
  <div class="sub" style="margin-top:5px">💡 ${it.why||""}</div>
- ${(it.status!=="ok"&&(it.fixed||it.model))?`<button class="btn sm ghost mt" ${wr.saved["g"+i]?"disabled":""} onclick="addNote('${(it.fixed||it.model||"").replace(/'/g,"")}','${(it.why||"").replace(/'/g,"")}','g${i}')">${wr.saved["g"+i]?"✓ Đã lưu":"➕ Lưu vào sổ câu sai"}</button>`:""}</div>`
+ ${(it.status!=="ok"&&(it.fixed||it.model))?`<button class="btn sm ghost mt" ${wr.saved["g"+i]?"disabled":""} onclick="addNoteG(${i})">${wr.saved["g"+i]?"✓ Đã lưu":"➕ Lưu vào sổ câu sai"}</button>`:""}</div>`
  :`<input class="tinput" style="margin:10px 0 0" type="text" placeholder="Một câu dùng cả hai..." value="${m.text.replace(/"/g,"")}" oninput="wr.ms[${i}].text=this.value" onchange="render()">
  <div class="hint" style="margin:6px 0 0">${usedV(m.v.ko,m.text)?"✅ đã có từ vựng":"chưa thấy từ vựng"} · NP thì AI kiểm tra</div>`}</div>`}).join("")}
  ${wr.gym?`${wr.gym.tip?`<div class="card gnote">💡 ${wr.gym.tip}</div>`:""}<div class="row2"><button class="btn" onclick="newMissions()">🔁 Nhiệm vụ mới (free)</button><button class="btn primary" onclick="back()">Xong</button></div>`
@@ -850,7 +958,7 @@ function vWrite(n){const o=n?LS[n-1]:null;const g=WGUIDE[n||0];wInit(n||0);
  ${(wr.res.corrections&&wr.res.corrections.length)?wr.res.corrections.map((c,ci)=>`<div class="card"><span class="pill">${c.type||""}</span>
  <div class="mt" style="font-size:16px"><span class="worig">${c.orig}</span> → <span class="wfix">${c.fix}</span></div>
  <div class="sub" style="margin-top:6px">💡 ${c.why}</div>
- <button class="btn sm ghost mt" ${wr.saved["c"+ci]?"disabled":""} onclick="addNote('${(c.fix||"").replace(/'/g,"")}','${(c.why||"").replace(/'/g,"")}','c${ci}')">${wr.saved["c"+ci]?"✓ Đã lưu":"➕ Lưu vào sổ"}</button></div>`).join("")
+ <button class="btn sm ghost mt" ${wr.saved["c"+ci]?"disabled":""} onclick="addNoteC(${ci})">${wr.saved["c"+ci]?"✓ Đã lưu":"➕ Lưu vào sổ"}</button></div>`).join("")
  :`<div class="card" style="background:var(--okbg)">🎉 Không có lỗi — xuất sắc!</div>`}
  ${wr.res.natural?`<div class="sec">Bản tự nhiên</div><div class="card"><div style="line-height:1.8">${wr.res.natural}</div><button class="spk mt" onclick="spk(event,'${(wr.res.natural||"").replace(/['"\n]/g," ")}')">🔊</button></div>`:""}
  ${wr.res.tip?`<div class="card gnote" style="margin-top:12px">💡 ${wr.res.tip}</div>`:""}
@@ -858,7 +966,7 @@ function vWrite(n){const o=n?LS[n-1]:null;const g=WGUIDE[n||0];wInit(n||0);
 function vNotes(){const ns=S.notes||[];
  return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">📒 Sổ câu sai</h1><div class="sub">${ns.length} câu của riêng bạn</div></div></div>
  <button class="btn primary" onclick="startNoteScram()" ${ns.length?"":"disabled"}>🧩 Ghép lại câu của mình (free)</button>
- ${ns.length?`<div class="card mt" style="padding:4px 16px">${ns.map((x,i)=>`<div class="vrow" onclick="this.classList.toggle('open')"><div style="flex:1;min-width:0"><div class="vko" style="font-size:15px">${x.ko}</div><div class="vvi">💡 ${x.why}</div></div><button class="spk" onclick="spk(event,'${x.ko.replace(/'/g,"")}')">🔊</button><button class="spk" onclick="event.stopPropagation();delNote(${i})">🗑</button></div>`).join("")}</div>`
+ ${ns.length?`<div class="card mt" style="padding:4px 16px">${ns.map((x,i)=>`<div class="vrow" onclick="this.classList.toggle('open')"><div style="flex:1;min-width:0"><div class="vko" style="font-size:15px">${x.ko}</div><div class="vvi">💡 ${x.why}</div></div><button class="spk" onclick="spkN(event,${i})">🔊</button><button class="spk" onclick="event.stopPropagation();delNote(${i})">🗑</button></div>`).join("")}</div>`
  :`<div class="card mt center sub">Còn trống. Bấm ➕ ở phần chấm AI để lưu câu.</div>`}`}
 function vSmart(){if(!sm)return vPractice();
  if(sm.i>=sm.q.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>Hoàn thành</h1></div>
@@ -927,173 +1035,11 @@ function vCheck(){const done=CHECK.filter((_,i)=>S.chk[i]).length;
 function vHelp(){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">📘 Hướng dẫn</h1></div></div>
 <div class="card"><b>App là gì?</b><div class="sub" style="margin-top:6px">Tự học trọn 세종 3B: 12 bài, 24 ngữ pháp, ${READ.length}+ bài đọc, máy chia động từ, 10 đề thi thử. Offline, dữ liệu trên máy bạn. Nguyên tắc: chủ động nhớ lại + lặp ngắt quãng (SRS).</div></div>
 <div class="sec">Điểm mạnh nên dùng mỗi ngày</div>
-<div class="card"><div class="sub">🧠 <b>Ôn SRS</b>: đúng → giãn lịch; sai → quay lại 10 phút và lặp trong buổi.<br>🔤 <b>Chia động từ</b>: 공부하다→공부해/했어요...; bất quy tắc ㅂㄷ르ㅡㄹ; đáp án nhiễu là lỗi kinh điển; mẫu bạn hay sai sẽ được hỏi nhiều hơn; giỏi rồi thì chuyển sang GÕ tay.<br>🎓 <b>TOPIK thử</b>: nghe 2 lượt như thật, nộp mới có điểm, xem lại từng câu sai kèm giải thích + bài cần ôn.<br>📖 <b>Đọc</b>: chạm từ = nghĩa Việt; 5 hoạt động/bài; ✨ tạo bài mới bằng AI.<br>✍️ <b>Viết</b>: 3 câu với từ yếu → AI chấm (1 lần gọi); lưu câu sai vào 📒 rồi ghép lại.</div></div>
+<div class="card"><div class="sub">🧠 <b>Ôn SRS</b>: đúng → giãn lịch; sai → quay lại 10 phút và lặp trong buổi.<br>🔤 <b>Chia động từ</b>: 공부하다→공부해/했어요...; bất quy tắc ㅂㄷ르ㅡㄹ; đáp án nhiễu là lỗi kinh điển; mẫu bạn hay sai được hỏi nhiều hơn; giỏi rồi thì chuyển sang GÕ tay.<br>🎓 <b>TOPIK thử</b>: đếm ngược 20 phút, nghe 1–2 lượt đúng luật thi, có 쓰기 51+53 AI chấm; nộp mới có điểm; xem lại từng câu sai kèm giải thích + bài cần ôn.<br>📖 <b>Đọc</b>: chạm từ = nghĩa Việt; nhiều hoạt động/bài; ✨ tạo bài mới bằng AI.<br>✍️ <b>Viết</b>: 3 câu với từ yếu → AI chấm (1 lần gọi); lưu câu sai vào 📒 rồi ghép lại.</div></div>
 <div class="sec">Lộ trình 15 phút/ngày</div>
 <div class="card"><div class="sub">1️⃣ Ôn SRS hết thẻ (5') → 2️⃣ 🔤 10 câu chia ĐT (4') → 3️⃣ 1 bài đọc (5'). Tối: 🎯 3 câu viết. Cuối tuần: 1 đề TOPIK + 💾 xuất sao lưu.</div></div>
-<div class="card"><b>Mẹo</b><div class="sub" style="margin-top:4px">· Bàn phím Hàn: Cài đặt→Bàn phím→Thêm Hàn ngữ<br>· Thêm vào màn hình chính từ Safari<br>· ĐỪNG xóa dữ liệu web Safari — sẽ mất tiến độ (hãy sao lưu!)</div></div>`}
+<div class="card"><b>Mẹo</b><div class="sub" style="margin-top:4px">· Bàn phím Hàn: Cài đặt→Bàn phím→Thêm Hàn ngữ<br>· Thêm vào màn hình chính từ Safari<br>· ĐỪNG xóa dữ liệu web Safari — sẽ mất tiến độ (hãy sao lưu!)<br>· 듣기 dùng giọng máy (TTS) — gần ngày thi hãy nghe thêm băng thu đề 기출 thật.</div></div>`}
 render();
-/* ================= TOPIK MOCK v2 — mô phỏng đề thật, độ khó cấp 3 ================= */
-const ML2=[
-{a:"여자: 주말에 뭐 했어요? 남자: 요양원에서 봉사 활동을 했어요.",q:"남자는 주말에 무엇을 했습니까?",o:["봉사 활동을 했다","아르바이트를 했다","여행을 갔다","집에서 쉬었다"],c:0},
-{a:"남자: 왜 이렇게 일찍 왔어요? 여자: 표가 매진될까 봐 일찍 왔어요.",q:"여자는 왜 일찍 왔습니까?",o:["표가 매진될까 봐","길이 막혀서","약속이 있어서","날씨가 좋아서"],c:0},
-{a:"여자: 이 찌개 어때요? 남자: 국물이 얼큰해서 자꾸 먹게 되네요.",q:"남자는 찌개가 어떻다고 합니까?",o:["얼큰해서 좋다","너무 싱겁다","조금 달다","아주 쓰다"],c:0},
-{a:"남자: 요리 다 됐어요? 여자: 아직요. 지금 채소를 썰어 놓는 중이에요.",q:"여자는 지금 무엇을 합니까?",o:["채소를 썰고 있다","설거지를 한다","밥을 먹는다","시장에 간다"],c:0},
-{a:"여자: 왜 지각했어요? 남자: 딴생각을 하다가 버스를 놓쳐 버렸어요.",q:"남자는 왜 늦었습니까?",o:["버스를 놓쳐서","비가 와서","아파서","일이 많아서"],c:0},
-{a:"남자: 어제는 제가 말이 심했어요. 여자: 괜찮아요. 일부러 그런 것도 아닌데요, 뭘.",q:"여자의 태도로 알맞은 것은?",o:["이해하고 용서한다","계속 화가 나 있다","자리를 떠난다","사과를 요구한다"],c:0},
-{a:"여자: 모임이 언제예요? 남자: 매주 토요일 아침에 한강 공원에서 모여요.",q:"모임은 언제 합니까?",o:["토요일 아침","일요일 저녁","금요일 밤","수요일 점심"],c:0},
-{a:"남자: 휴가 준비 다 했어요? 여자: 네, 호텔도 미리 예약해 놓았어요.",q:"여자는 무엇을 했습니까?",o:["호텔을 예약해 두었다","표를 취소했다","가방을 잃어버렸다","회사에 갔다"],c:0},
-{a:"여자: 결혼식이 몇 시예요? 남자: 낮 12시요. 피로연은 식이 끝난 다음에 있어요.",q:"피로연은 언제 합니까?",o:["결혼식이 끝난 후에","결혼식 전에","아침 일찍","다음 날"],c:0},
-{a:"남자: 설날에 보통 뭐 해요? 여자: 떡국을 먹고 어른들께 세배를 드려요.",q:"여자는 설날에 무엇을 합니까?",o:["떡국을 먹고 세배를 한다","여행을 간다","일을 한다","친구를 만난다"],c:0},
-{a:"여자: 면접 준비는요? 남자: 예상 질문을 미리 준비해 두었어요.",q:"남자는 무엇을 준비했습니까?",o:["예상 질문에 대한 대답","새 양복","회사 지도","명함"],c:0},
-{a:"남자: 요즘 바빠 보여요. 여자: 유학 서류를 준비하는 중이거든요.",q:"여자는 지금 무엇을 합니까?",o:["유학 서류 준비","비자 면접","이사 준비","시험 공부"],c:0},
-{a:"여자: 어제 전화 왜 안 받았어요? 남자: 미안해요. 회의하느라고 못 받았어요.",q:"남자는 왜 전화를 못 받았습니까?",o:["회의 때문에","자고 있어서","휴대폰이 고장 나서","운전 때문에"],c:0},
-{a:"남자: 콘서트 어땠어요? 여자: 무대가 정말 환상적이던데요.",q:"여자의 감상으로 맞는 것은?",o:["환상적이었다","지루했다","너무 짧았다","시끄러웠다"],c:0},
-{a:"여자: 이 과자 어때요? 남자: 눅눅하지 않고 아주 바삭하네요.",q:"과자는 어떻습니까?",o:["바삭하다","눅눅하다","질기다","너무 달다"],c:0},
-{a:"남자: 순서가 어떻게 돼요? 여자: 생선을 구운 다음에 채소를 볶으면 돼요.",q:"먼저 해야 하는 일은?",o:["생선 굽기","채소 볶기","밥 짓기","설거지"],c:0},
-{a:"여자: 지갑 찾았어요? 남자: 네, 카페 직원이 잘 보관해 주셨더라고요.",q:"지갑은 어떻게 되었습니까?",o:["직원이 보관해 주었다","결국 못 찾았다","집에 있었다","친구가 가져갔다"],c:0},
-{a:"남자: 한국어 정말 잘하시네요. 여자: 잘하기는요. 아직 많이 부족해요.",q:"여자의 대답의 의미는?",o:["겸손하게 부정한다","자랑하고 있다","화를 내고 있다","질문을 못 들었다"],c:0},
-{a:"여자: 휴가 때 뭐 했어요? 남자: 밀린 일을 처리하느라고 아무 데도 못 갔어요.",q:"남자는 휴가를 어떻게 보냈습니까?",o:["일을 하면서 보냈다","여행을 갔다","호텔에서 쉬었다","고향에 갔다"],c:0},
-{a:"남자: 송편 만들어 봤어요? 여자: 네, 어렵기는 했지만 정말 재미있었어요.",q:"여자의 경험으로 맞는 것은?",o:["어려웠지만 재미있었다","쉽고 간단했다","만들다가 포기했다","맛이 없었다"],c:0}];
-const MG2=[
-{q:"약속 시간에 늦어서 택시를 (    ).",o:["타 버렸어요","타 놓았어요","타 드렸어요","타고 싶어요"],c:0,x:"Kết quả dứt điểm trong tình huống gấp → -아/어 버리다",ln:5},
-{q:"손님이 오기 전에 음식을 미리 (    ).",o:["만들어 놓았습니다","만들자마자","만들 텐데","만드는 중에"],c:0,x:"미리 + giữ kết quả → -아/어 놓다",ln:4},
-{q:"이 국은 조금 (    ) 소금을 더 넣었어요.",o:["싱거워서","싱겁어서","싱거서","싱겁아서"],c:0,x:"ㅂ bất quy tắc: 싱겁다→싱거워",ln:3},
-{q:"음악을 (    ) 요리하는 것을 좋아해요.",o:["들으면서","듣으면서","들면서","듣아면서"],c:0,x:"ㄷ bất quy tắc: 듣다→들으면서",ln:1},
-{q:"표가 (    ) 봐 두 달 전에 예매했어요.",o:["매진될까","매진할까","매진될","매진되을까"],c:0,x:"-(으)ㄹ까 봐: 되다→될까",ln:2},
-{q:"어제 백화점에 갔는데 사람이 정말 (    ).",o:["많던데요","많는데요","많은 중이에요","많거든요?"],c:0,x:"Kể điều đã quan sát → -던데요",ln:10},
-{q:"주말에는 등산을 (    ) 캠핑을 가요.",o:["간다거나","가다거나","갔다거나","가는다거나"],c:0,x:"Động từ không patchim → -ㄴ다거나",ln:7},
-{q:"시험 공부를 (    ) 잠을 세 시간밖에 못 잤어요.",o:["하느라고","해느라고","하려고","해서라고"],c:0,x:"Bận A nên không B → -느라고",ln:8},
-{q:"친구 말을 먼저 (    ) 그랬어요.",o:["들어 볼걸","듣어 볼걸","들을걸요","듣기는"],c:0,x:"Hối tiếc → -(으)ㄹ걸 그랬다; 듣다→들어",ln:6},
-{q:"할머니께 사진을 찍어 (    ).",o:["드렸습니다","줬습니다","드리었습니다","드렸어"],c:0,x:"Người trên + văn viết trang trọng → 드렸습니다",ln:1},
-{q:"떡국을 한 그릇 다 (    ) 배가 불렀어요.",o:["먹었더니","먹더니","먹으니까는","먹는 중에"],c:0,x:"Hành động của mình + kết quả phát hiện → -았더니",ln:10},
-{q:"지금 입사 지원서를 (    ) 중입니다.",o:["쓰는","써는","쓰은","씁는"],c:0,x:"-는 중: 쓰다→쓰는",ln:12},
-{q:"아무리 (    ) 아침 운동은 꼭 해요.",o:["바빠도","바쁘어도","바빠서도","바쁘아도"],c:0,x:"ㅡ lược bỏ: 바쁘다→바빠 + 도",ln:1},
-{q:"결혼식이 (    ) 다음에 피로연이 있습니다.",o:["끝난","끝나은","끝는","끝났는"],c:0,x:"-(으)ㄴ 다음에: 끝나다→끝난",ln:9},
-{q:"한국 생활이 (    ) 하지만 보람이 있어요.",o:["힘들기는","힘든기는","힘들기가","힘들지는"],c:0,x:"-기는 하다",ln:12},
-{q:"동생 결혼식에서 축가를 (    ).",o:["불렀습니다","부렀습니다","불었습니다","부르었습니다"],c:0,x:"르 bất quy tắc: 부르다→불러→불렀",ln:9},
-{q:"필요한 경력을 조금씩 (    ) 가고 있습니다.",o:["쌓아","쌓어","싸아","쌓으러"],c:0,x:"쌓다: ㅏ→아; -아 가다",ln:11},
-{q:"집에 (    ) 손부터 씻으세요.",o:["도착하자마자","도착하자말자","도착해자마자","도착한자마자"],c:0,x:"어간+자마자 (không chia)",ln:5},
-{q:"매운 것을 먹으면 속이 (    ).",o:["쓰려요","쓰러요","쓰리어요","씁니다요"],c:0,x:"쓰리다: 리+어→려",ln:3},
-{q:"비가 (    ) 우산을 가져가세요.",o:["올 텐데","오을 텐데","온 텐데","오는 텐데"],c:0,x:"오다→올 텐데",ln:2}];
-const TH2=[{pi:20,c:"결혼식 초대",o:["결혼식 초대","회원 모집","직원 채용","행사 안내"]},{pi:18,c:"회원 모집",o:["회원 모집","결혼식 초대","아르바이트 후기","여행 안내"]},{pi:22,c:"직원 채용",o:["직원 채용","회원 모집","제품 광고","학교 안내"]},{pi:21,c:"행사 안내",o:["행사 안내","맛집 소개","교통 안내","날씨 안내"]},{pi:15,c:"요리 방법",o:["요리 방법","식당 광고","건강 정보","쇼핑 안내"]},{pi:26,c:"음식 추천",o:["음식 추천","식당 예약","요리 강좌 모집","건강 검진 안내"]}];
-const OP2=[3,15,5,28,34,8,24,33,31,9];
-const RC2=[0,13,7,16,19,32,27,30,35,11];
-const W512=[
-{t:"동호회 회원 여러분께.\n이번 주 토요일에 같이 북한산에 (   ㉠   ).\n오고 싶은 분은 저에게 연락해 주세요.",m:"등산을 가려고 합니다 / 가는 게 어때요?",h:"Câu rủ rê/kế hoạch: -(으)려고 하다, -는 게 어때요?"},
-{t:"수진 씨, 어제는 정말 미안했어요.\n제가 (   ㉠   ).\n앞으로 주의하겠습니다.",m:"말실수를 해서 기분이 나빴지요? / 좀 참을걸 그랬어요.",h:"Xin lỗi + hối tiếc: -을걸 그랬어요"},
-{t:"내일 요리 수업이 있습니다.\n수업 전에 채소를 미리 (   ㉠   ).\n그럼 내일 만나요!",m:"씻어서 썰어 놓으세요 / 준비해 놓으세요.",h:"Chuẩn bị sẵn: -아/어 놓다 + 세요"},
-{t:"부장님, 죄송합니다.\n오늘 아침에 (   ㉠   ) 지각했습니다.\n앞으로는 알람을 두 개 맞춰 놓겠습니다.",m:"늦잠을 자서 / 버스를 놓쳐서",h:"Lý do: -아/어서"},
-{t:"마크 씨, 휴가 잘 보내고 있어요?\n저는 일이 많아서 (   ㉠   ).\n다음에 꼭 같이 가요.",m:"아무 데도 못 갔어요 / 여행을 못 갔어요",h:"일하느라고 + 못"},
-{t:"여러분, 이번 주말이 정월 대보름입니다.\n같이 보름달을 (   ㉠   ).\n장소는 시민 공원입니다.",m:"보면서 소원을 빌어요 / 보러 갑시다",h:"-(으)면서 / -(으)러 가다"},
-{t:"김 대리님, 축하합니다!\n승진 소식을 (   ㉠   ) 정말 기뻤습니다.\n오늘 저녁에 축하 파티 어때요?",m:"듣고 / 들었을 때",h:"듣다→들어 (ㄷ bất quy tắc)"},
-{t:"안녕하세요. 유학생 링입니다.\n지금 기숙사 신청서를 (   ㉠   ).\n언제까지 내야 하는지 알려 주시면 감사하겠습니다.",m:"작성하는 중입니다 / 준비하고 있습니다",h:"-는 중이다"},
-{t:"이 식당의 김치찌개는 국물이 (   ㉠   ) 인기가 많습니다.\n한번 드셔 보세요.",m:"얼큰해서 / 맵지만 맛있어서",h:"Vị + lý do -아/어서"},
-{t:"콘서트에 가고 싶은 분들께.\n표가 빨리 (   ㉠   ) 오늘 예매하세요.\n좌석이 얼마 안 남았습니다.",m:"매진될까 봐 걱정되면 / 매진될 수 있으니까",h:"-(으)ㄹ까 봐 / -(으)니까"}];
-const W532=[
-{t:"지난 방학에 한 일",b:"· 어디에서 무엇을 했습니까?\n· 무엇이 가장 기억에 남습니까?\n· 그 경험에서 무엇을 느꼈습니까?",g:"-았/었더니, 보람을 느끼다"},
-{t:"콘서트/공연 후기",b:"· 언제, 누구의 공연에 갔습니까?\n· 표는 어떻게 구했습니까?\n· 공연이 어땠습니까?",g:"-(으)ㄹ까 봐, 감동적이다"},
-{t:"내가 좋아하는 음식",b:"· 무슨 음식을 좋아합니까?\n· 맛이 어떻습니까?\n· 왜 다른 사람에게 추천하고 싶습니까?",g:"-거든요, 얼큰하다/담백하다"},
-{t:"내가 잘하는 요리",b:"· 무슨 요리입니까?\n· 어떤 순서로 만듭니까?\n· 언제 이 요리를 만듭니까?",g:"-(으)ㄴ 다음에, -아/어 놓다"},
-{t:"기억에 남는 실수",b:"· 언제, 무슨 실수를 했습니까?\n· 왜 그런 실수를 했습니까?\n· 그 후에 어떻게 되었습니까?",g:"-아/어 버리다, -자마자"},
-{t:"친구와 화해한 경험",b:"· 왜 사이가 안 좋아졌습니까?\n· 어떻게 화해했습니까?\n· 지금 어떻게 지냅니까?",g:"-(으)ㄹ걸 그랬다, 오해를 풀다"},
-{t:"가입하고 싶은 동호회",b:"· 무슨 동호회에 가입하고 싶습니까?\n· 그 동호회는 무엇을 합니까?\n· 왜 가입하고 싶습니까?",g:"-는다거나, 인맥을 쌓다"},
-{t:"나의 휴가 계획",b:"· 어디로 가고 싶습니까?\n· 거기에서 무엇을 할 겁니까?\n· 왜 그곳을 선택했습니까?",g:"-느라고, 여유를 즐기다"},
-{t:"우리 나라의 명절",b:"· 대표적인 명절이 무엇입니까?\n· 그날 무엇을 합니까?\n· 한국의 명절과 무엇이 비슷합니까?",g:"-던데요, 소원을 빌다"},
-{t:"나의 진로 계획",b:"· 어떤 일을 하고 싶습니까?\n· 지금 무엇을 준비하고 있습니까?\n· 앞으로 어떻게 할 겁니까?",g:"-아/어 두다, -아/어 가다"}];
-let MK=null,MKIV=null;
-function m2Perm(){const p=shuffle([0,1,2,3]);return p}
-function m2Order(t){const P=READ[OP2[t%OP2.length]];const sents=[0,1,2,3].map(i=>P.s[i].map(x=>x[0]).join(" "));
- const disp=m2Perm();const lab=["가","나","다","라"];const labOf=k=>lab[disp.indexOf(k)];
- const corr=[0,1,2,3].map(labOf).join("-");
- const alts=[[1,0,2,3],[0,2,1,3],[0,1,3,2],[3,2,1,0],[1,2,0,3]].map(o=>o.map(labOf).join("-")).filter(s=>s!==corr);
- const opts=shuffle([corr,...[...new Set(alts)].slice(0,3)]);
- return{tp:"O",sec:"읽기",q:"다음을 순서대로 맞게 배열한 것을 고르십시오.",lines:disp.map(k=>lab[disp.indexOf(k)]+". "+sents[k]),o:opts,c:opts.indexOf(corr),x:"Thứ tự đúng: "+corr}}
-function m2Build(t){const qs=[];
- for(let i=0;i<4;i++){const m=ML2[(t*4+i)%ML2.length];qs.push({tp:"L",sec:"듣기",au:m.a,q:m.q,o:m.o,c:m.c,max:i<2?1:2,pt:8})}
- for(let i=0;i<2;i++){const th=TH2[(t*2+i)%TH2.length];const P=READ[th.pi];
-  const opts=shuffle([...th.o]);qs.push({tp:"T",sec:"읽기",pi:th.pi,q:"다음은 무엇에 대한 글입니까?",o:opts,c:opts.indexOf(th.c),pt:6})}
- for(let i=0;i<2;i++){const g=MG2[(t*2+i)%MG2.length];qs.push({tp:"G",sec:"읽기",q:"(    )에 들어갈 말로 가장 알맞은 것을 고르십시오.\n\n"+g.q,o:g.o,c:g.c,x:g.x,ln:g.ln,pt:6})}
- qs.push({...m2Order(t),pt:6});
- const P=READ[RC2[t%RC2.length]];
- P.q.slice(0,2).forEach((pq,i)=>{const other=P.q[1-i].o.find(o=>!pq.o.includes(o))||"글쓴이는 한국에 산 적이 없습니다.";
-  const opts=shuffle([...pq.o,other]);qs.push({tp:"R",sec:"읽기",pi:RC2[t%RC2.length],q:pq.q,o:opts,c:opts.indexOf(pq.o[pq.a]),pt:6})});
- qs.push({tp:"O2",sec:"읽기",...m2Order((t+5))});
- qs[qs.length-1].pt=6;qs[qs.length-1].tp="O";
- return qs}
-function startMock(t){MK={t,phase:"intro",qs:m2Build(t),i:0,ans:{},plays:{},w51:"",w53:"",wRes:null,obj:0,secs:{L:0,R:0,W:0},deadline:0};go("mock")}
-function m2Begin(){MK.phase="test";MK.deadline=Date.now()+20*60*1000;
- if(MKIV)clearInterval(MKIV);
- MKIV=setInterval(()=>{if(route.v!=="mock"||!MK||MK.phase!=="test"){clearInterval(MKIV);return}
-  const r=MK.deadline-Date.now();const el=document.getElementById("mtmr");
-  if(el){const s=Math.max(0,Math.floor(r/1000));el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");el.style.color=r<180000?"var(--red)":"var(--muted)"}
-  if(r<=0){clearInterval(MKIV);m2Submit()}},1000);
- render()}
-function m2Play(){const q=MK.qs[MK.i];const n=MK.plays[MK.i]||0;if(n>=q.max)return;MK.plays[MK.i]=n+1;speak(q.au);render()}
-function m2Pick(oi){MK.ans[MK.i]=oi;render()}
-function m2Nav(d){MK.i=Math.max(0,Math.min(MK.qs.length-1,MK.i+d));render();window.scrollTo(0,0)}
-async function m2Submit(){if(MK.phase!=="test")return;clearInterval(MKIV);
- let L=0,R=0;MK.qs.forEach((q,i)=>{if(MK.ans[i]===q.c){if(q.sec==="듣기")L+=q.pt;else R+=q.pt}});
- MK.secs={L,R,W:0};MK.obj=L+R;
- const hasW=(MK.w51.trim().length>=3||MK.w53.trim().length>=20)&&S.akey;
- if(hasW){MK.phase="grading";render();
-  try{const w5=W512[MK.t%10],w3=W532[MK.t%10];
-   const res=await callClaude(
-`Bạn là giám khảo TOPIK II chấm trình độ mục tiêu CẤP 3. Chấm 2 bài. CHỈ trả JSON: {"w51":{"score":0-8,"fix":"câu mẫu tự nhiên","why":"VN 1 câu"},"w53":{"score":0-12,"c":0-4,"o":0-4,"l":0-4,"why":"nhận xét VN 2-3 ý ngắn","fix":"1-2 chỗ sửa tiêu biểu dạng sai→đúng"}}. Tiêu chí 53: c=nội dung đủ ý, o=mạch lạc, l=ngữ pháp/từ vựng đúng cấp 3 (chia động từ sai trừ mạnh).`,
-`[51] Văn cảnh: ${w5.t}\nĐáp án mẫu: ${w5.m}\nHọc viên viết: ${MK.w51||"(bỏ trống)"}\n\n[53] Đề: ${w3.t} · Yêu cầu: ${w3.b} · Ngữ pháp gợi ý: ${w3.g} · 120~180자\nBài viết: ${MK.w53||"(bỏ trống)"}`,700);
-   MK.wRes=res;MK.secs.W=Math.min(20,(res.w51&&res.w51.score||0)+(res.w53&&res.w53.score||0))}
-  catch(e){MK.wRes={err:e.message}}}
- MK.score=MK.obj+MK.secs.W;MK.phase="done";
- const best=S.mock[MK.t]||{best:0};S.mock[MK.t]={best:Math.max(best.best||0,MK.score),last:MK.score,d:Date.now()};
- S.xp+=Math.round(MK.score/5);touchStreak();save();render()}
-function vMockList(){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><div style="flex:1"><h1 style="font-size:20px">🎓 TOPIK 모의고사</h1><div class="sub">Cấp 3 · 12 câu trắc nghiệm + 2 bài viết · ⏱ 20 phút</div></div></div>
-<div class="card"><div class="sub">Cấu trúc theo đề thật: 🎧 <b>듣기 4</b> (2 câu đầu nghe <b>1 lần</b>, 2 câu sau 2 lần — như quy tắc 1~20/21~50) · 📖 <b>읽기 8</b> (chủ đề văn bản · điền khuyết · sắp xếp thứ tự 가나다라 · nội dung trùng khớp — đủ 4 lựa chọn ①②③④) · ✍️ <b>쓰기 2</b> (dạng câu 51 + bài 53 rút gọn 120~180자, AI chấm theo rubric 내용·구성·언어사용). Hết giờ tự nộp.</div></div>
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-${[...Array(10)].map((_,t)=>{const m=S.mock[t];return `<button class="mockn" onclick="startMock(${t})"><b>제${t+1}회</b><span class="sc">${m?"Cao nhất: "+m.best+"/100":"Chưa thi"}</span>${m&&m.best>=70?"<span>🏅</span>":""}</button>`}).join("")}</div>
-<p class="warn mt center">Mô phỏng theo phạm vi 3B · Điểm chỉ tham khảo, không quy đổi chính thức. Gần ngày thi hãy làm đề 기출 thật tại topik.go.kr.</p>`}
-function vMock(){if(!MK)return vMockList();
- if(MK.phase==="intro"){const w3=W532[MK.t%10];
- return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>제${MK.t+1}회</h1></div>
- <div class="card"><b>Quy chế phòng thi 📋</b><div class="sub" style="margin-top:6px">· ⏱ 20:00 đếm ngược — hết giờ <b>tự nộp</b><br>· 🎧 Câu 1–2: nghe đúng <b>1 lần</b> · Câu 3–4: tối đa 2 lần<br>· Được quay lại sửa đáp án bằng nút ← →<br>· ✍️ Cuối bài có 2 câu viết (chủ đề hôm nay: “${w3.t}”)${S.akey?"":"<br>⚠️ Chưa có API key → phần viết sẽ không được chấm (điểm tính trên 80)"}<br>· Ngồi nơi yên tĩnh, không tra từ điển 🤫</div></div>
- <button class="btn primary" onclick="m2Begin()">시험 시작 · Bắt đầu</button>`}
- if(MK.phase==="grading")return `<div class="pagehead"><h1>Đang chấm 쓰기...</h1></div><div class="card center"><div class="spin"></div><div class="sub mt">Giám khảo AI đang chấm theo rubric TOPIK...</div></div>`;
- if(MK.phase==="done"){const s=MK.score;const noW=!MK.wRes||MK.wRes.err;
- const lv=noW?(MK.obj>=56?"Nền trắc nghiệm vững cấp 3 (chưa tính 쓰기)":MK.obj>=40?"Sát ngưỡng — luyện thêm":"Cần ôn lại nền tảng")
- :(s>=70?"Vững mức cấp 3 (mô phỏng) 🏅":s>=55?"Chạm ngưỡng cấp 3 — bù phần sai":s>=40?"Ranh giới — tập trung phần yếu":"Chưa đạt — ôn bài rồi thi lại");
- return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>제${MK.t+1}회 결과</h1></div>
- <div class="card center"><div class="bigxp">${s}<span style="font-size:20px;color:var(--muted)">/${noW?80:100}</span></div><div class="sub">${lv}</div>
- <div class="mt" style="display:flex;justify-content:center;gap:16px;font-size:14px"><span>🎧 ${MK.secs.L}/32</span><span>📖 ${MK.secs.R}/48</span><span>✍️ ${noW?"—":MK.secs.W+"/20"}</span></div></div>
- ${MK.wRes&&!MK.wRes.err?`<div class="sec">✍️ Chấm bài viết</div>
- <div class="card"><span class="pill">51 · ${MK.wRes.w51.score}/8</span><div class="sub mt">💡 ${MK.wRes.w51.why||""}</div><div class="gex">Mẫu: ${MK.wRes.w51.fix||W512[MK.t%10].m}</div></div>
- <div class="card"><span class="pill">53 · ${MK.wRes.w53.score}/12</span><div class="sub mt">Nội dung ${MK.wRes.w53.c}/4 · Mạch lạc ${MK.wRes.w53.o}/4 · Ngôn ngữ ${MK.wRes.w53.l}/4</div><div class="sub mt">💡 ${MK.wRes.w53.why||""}</div>${MK.wRes.w53.fix?`<div class="gex">${MK.wRes.w53.fix}</div>`:""}</div>`:""}
- <div class="sec">Xem lại câu sai</div>
- ${MK.qs.map((q,i)=>MK.ans[i]===q.c?"":`<div class="card"><span class="pill">${q.sec} ${i+1}</span>
- ${q.tp==="L"?`<div class="sub mt">📜 ${q.au} <button class="spk" style="display:inline-flex;width:28px;height:28px;font-size:11px" onclick="spk(event,'${q.au.replace(/'/g,"")}')">🔊</button></div>`:""}
- <div class="mt" style="font-weight:600;white-space:pre-line">${q.q}</div>
- ${q.lines?`<div class="sub mt">${q.lines.join("<br>")}</div>`:""}
- <div class="mt"><span class="worig">${q.o[MK.ans[i]]??"(bỏ trống)"}</span> → <span class="wfix">${q.o[q.c]}</span></div>
- ${q.x?`<div class="sub" style="margin-top:5px">💡 ${q.x}</div>`:""}${q.ln?`<div class="sub">→ Ôn bài ${q.ln}과</div>`:""}
- ${q.pi!==undefined?`<button class="btn sm ghost mt" onclick="openPassage(${q.pi})">📖 Đọc lại (có nghĩa từ)</button>`:""}</div>`).join("")||`<div class="card center" style="background:var(--okbg)">🎉 Trắc nghiệm đúng hết!</div>`}
- <div class="row2"><button class="btn" onclick="startMock(MK.t)">🔁 Thi lại</button><button class="btn primary" onclick="back()">Xong</button></div>`}
- const N=MK.qs.length;
- if(MK.i>=N){const w5=W512[MK.t%10],w3=W532[MK.t%10];
- return `<div class="pagehead"><span class="pill">✍️ 쓰기</span><div style="flex:1"></div><span class="pill" id="mtmr">--:--</span></div>
- <div class="card"><b>51.</b> ㉠에 들어갈 알맞은 말을 <b>한 문장</b>으로 쓰십시오. (8점)<div class="gex" style="white-space:pre-line">${w5.t}</div><div class="hint">Gợi ý: ${w5.h}</div>
- <input class="tinput" type="text" placeholder="㉠ = ..." value="${MK.w51.replace(/"/g,"")}" oninput="MK.w51=this.value"></div>
- <div class="card"><b>53.</b> 다음을 참고하여 <b>120~180자</b>로 쓰십시오. (12점)<div class="gex"><b>${w3.t}</b><div class="sub" style="white-space:pre-line;margin-top:4px">${w3.b}</div><div class="sub mt">권장 문법: ${w3.g}</div></div>
- <textarea class="tinput" placeholder="여기에 쓰십시오..." oninput="MK.w53=this.value">${MK.w53}</textarea>
- <div class="hint">${MK.w53.replace(/\s/g,"").length}자</div></div>
- <div class="row2"><button class="btn" onclick="m2Nav(-1);MK.i=N-1;render()">← Câu 12</button><button class="btn primary" onclick="m2Submit()">제출 · Nộp bài</button></div>`}
- const q=MK.qs[MK.i];const sel=MK.ans[MK.i];const plays=MK.plays[MK.i]||0;
- return `<div class="pagehead"><button class="backbtn" onclick="if(confirm('Thoát? Bài thi sẽ mất.')){clearInterval(MKIV);back()}">✕</button>
- <div style="flex:1"><div class="bar"><i style="width:${Math.round(MK.i/(N+1)*100)}%"></i></div></div>
- <span class="pill">${MK.i+1}/${N} · ${q.sec}</span><span class="pill" id="mtmr">--:--</span></div>
- ${(q.tp==="T"||q.tp==="R")?`<div class="card" style="max-height:210px;overflow-y:auto"><div style="line-height:1.85;font-size:15.5px">${READ[q.pi].s.map(sn=>sn.map(t=>t[0]).join(" ")).join(" ")}</div></div>`:""}
- ${q.tp==="L"?`<div class="qprompt"><div class="tag">🎧 ${q.max===1?"CHỈ NGHE 1 LẦN":"tối đa 2 lần"} · còn ${q.max-plays}</div>
- <button class="btn sm ${plays>=q.max?"":"primary"}" style="max-width:170px;margin:0 auto" ${plays>=q.max?"disabled":""} onclick="m2Play()">🔊 ${plays===0?"재생":"다시 듣기"}</button>
- <div class="qmid mt" style="font-size:16.5px">${q.q}</div></div>`
- :`<div class="qprompt"><div class="qmid" style="font-size:16.5px;white-space:pre-line">${q.q}</div>${q.lines?`<div class="mt" style="text-align:left;font-size:15px;line-height:1.9;background:var(--soft);border-radius:12px;padding:10px 12px">${q.lines.join("<br>")}</div>`:""}</div>`}
- ${q.o.map((o,i)=>`<button class="opt ${sel===i?"pick":""}" onclick="m2Pick(${i})">${"①②③④"[i]} ${o}</button>`).join("")}
- <div class="row2 mt"><button class="btn" ${MK.i===0?"disabled":""} onclick="m2Nav(-1)">← Trước</button><button class="btn primary" onclick="${MK.i===N-1?"MK.i=N;render()":"m2Nav(1)"}">${MK.i===N-1?"→ Phần 쓰기":"Tiếp →"}</button></div>`}
 </script>
 </body>
 </html>
