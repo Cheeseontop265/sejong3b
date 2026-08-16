@@ -1,8 +1,6 @@
 <!--
-HanaAI 3B — v5
-Date: (điền ngày bạn lưu file)
-Changes this version: Gộp 1 mock engine duy nhất (xóa v1 trùng); sửa nút "→ Phần 쓰기" chết (lỗi biến N trong onclick); viết lại wrongForms (hết jamo rác, distractor = lỗi kinh điển); HADJ fix tính từ 하다; API retry+cache+counter chuẩn; lưu sổ an toàn quote (addNoteG/C, deepClean); guard thi khi chuyển tab; mkPerm chống ra sẵn đáp án; Home thêm gợi ý + Cổng 4A + nhắc sao lưu. Storage giữ nguyên hana3b_v4 — không mất dữ liệu.
-Known issues / TODO: 듣기 dùng TTS (không phải băng thu thật); đề 6–10 tái dùng một phần ngân hàng nghe đề 1–5; cổng "gloss-tap <30%" chưa đo tự động.
+HanaAI 3B — v6
+Changes this version: FIX ghép câu chưa từng xáo trộn (mảnh luôn đúng thứ tự — lỗi từ bản đầu, audit v5 bỏ sót); nâng cấp scramble: xáo + 2 mảnh bẫy (động từ câu khác); XÓA 듣고 만들기 (trùng giá trị với 받아쓰기); sắp lại menu Luyện tập theo ưu tiên. Override block v6 nằm trên render() cuối — các hàm scram/vPractice cũ bị che (an toàn theo hoisting), KHÔNG cần xóa tay.
 -->
 <!DOCTYPE html>
 <html lang="ko">
@@ -1040,6 +1038,67 @@ function vHelp(){return `<div class="pagehead"><button class="backbtn" onclick="
 <div class="card"><div class="sub">1️⃣ Ôn SRS hết thẻ (5') → 2️⃣ 🔤 10 câu chia ĐT (4') → 3️⃣ 1 bài đọc (5'). Tối: 🎯 3 câu viết. Cuối tuần: 1 đề TOPIK + 💾 xuất sao lưu.</div></div>
 <div class="card"><b>Mẹo</b><div class="sub" style="margin-top:4px">· Bàn phím Hàn: Cài đặt→Bàn phím→Thêm Hàn ngữ<br>· Thêm vào màn hình chính từ Safari<br>· ĐỪNG xóa dữ liệu web Safari — sẽ mất tiến độ (hãy sao lưu!)<br>· 듣기 dùng giọng máy (TTS) — gần ngày thi hãy nghe thêm băng thu đề 기출 thật.</div></div>`}
 render();
+/* ===== OVERRIDE v6 — Ghép câu nâng cấp (xáo trộn + mảnh bẫy) · Xóa 듣고 만들기 ===== */
+function lastWord(s){const w=s.split(" ");return w[w.length-1].replace(/[.?!,]/g,"")}
+function scBuild(ko,vi,l,trapWords){
+ const words=ko.split(" ");
+ const traps=[...new Set(trapWords.filter(w=>w&&w.length>=2&&!words.includes(w)))].slice(0,2);
+ let chips,g=0;
+ do{chips=shuffle([...words.map(w=>({w,r:1})),...traps.map(w=>({w,r:0}))])}
+ while(++g<15&&chips.length>1&&chips.every((c,i)=>c.w===(words[i]||"")));
+ return{l,ko,vi,chips,wlen:words.length}}
+function startScram(l){let pool=SENT.filter(s=>l?s[0]===l:true);
+ if(!l){const sl=studiedLessons();if(sl.length)pool=SENT.filter(s=>sl.includes(s[0]))}
+ if(pool.length<3)pool=SENT;
+ sc={list:shuffle([...pool]).slice(0,6).map(s=>scBuild(s[1],s[2],s[0],shuffle(pool.filter(x=>x[1]!==s[1])).slice(0,5).map(x=>lastWord(x[1])))),i:0,chosen:[],state:null};
+ go("scram")}
+function startNoteScram(){const ns=(S.notes||[]).filter(x=>x.ko.split(" ").length>=3);
+ if(!ns.length){alert("Sổ còn trống. Lưu câu từ phần chấm AI nhé.");return}
+ sc={list:shuffle([...ns]).slice(0,6).map(x=>scBuild(x.ko,x.why,"note",shuffle(ns.filter(y=>y.ko!==x.ko)).slice(0,5).map(y=>lastWord(y.ko)))),i:0,chosen:[],state:null};
+ go("scram")}
+function scTap(ci){if(sc.state)return;if(sc.chosen.includes(ci))return;sc.chosen.push(ci);render()}
+function scUndo(k){if(sc.state)return;sc.chosen.splice(k,1);render()}
+function scCheck(){const q=scQ();
+ if(sc.chosen.map(i=>q.chips[i].w).join(" ")===q.ko){sc.state="ok";S.xp+=8;touchStreak();save();speak(q.ko)}else sc.state="no";render()}
+function scNext(){sc.i++;sc.chosen=[];sc.state=null;render()}
+function vScram(){if(!sc)return vPractice();
+ if(sc.i>=sc.list.length){return `<div class="pagehead"><button class="backbtn" onclick="back()">‹</button><h1>Hoàn thành</h1></div>
+ <div class="card center"><div style="font-size:40px">🧩</div><div class="bigxp">${sc.list.length} câu</div><div class="sub">Xếp đúng cả khi có mảnh bẫy = nắm chắc cả nghĩa lẫn trật tự.</div></div>
+ <button class="btn primary" onclick="back()">Xong</button>`}
+ const q=scQ();const used=new Set(sc.chosen);const traps=q.chips.filter(c=>!c.r).length;
+ return `<div class="pagehead"><button class="backbtn" onclick="back()">✕</button><div style="flex:1"><div class="bar"><i style="width:${Math.round(sc.i/sc.list.length*100)}%"></i></div></div><span class="pill">${sc.i+1}/${sc.list.length}</span></div>
+ <div class="qprompt" style="padding:18px"><div class="tag">Ghép câu · ${q.l}${typeof q.l==="number"?"과":""}</div>
+ <div class="qmid" style="font-size:16.5px;color:var(--muted)">${q.vi}</div>
+ ${traps?`<div class="hint" style="margin-top:8px">⚠️ Có ${traps} mảnh BẪY — không phải mảnh nào cũng dùng!</div>`:""}</div>
+ <div class="ansline">${sc.chosen.map((ci,k)=>`<button class="wchip" onclick="scUndo(${k})">${q.chips[ci].w}</button>`).join("")||`<span class="hint">Chạm các mảnh theo thứ tự · cần ${q.wlen} mảnh</span>`}</div>
+ <div>${q.chips.map((c,ci)=>`<button class="wchip ${used.has(ci)?"used":""}" onclick="scTap(${ci})">${c.w}</button>`).join("")}</div>
+ ${sc.state==="ok"?`<div class="expl good">✅ ${yay()}<br><b>${q.ko}</b><br><span class="sub">${q.vi}</span></div><button class="btn primary" onclick="scNext()">Tiếp</button>`
+ :sc.state==="no"?`<div class="expl bad">❌ Đáp án:<br><b>${q.ko}</b><br><span class="sub">${q.vi}</span>${sc.chosen.some(i=>!q.chips[i].r)?`<div class="mt" style="font-size:13.5px">Bạn đã dính mảnh bẫy: <span class="worig">${sc.chosen.filter(i=>!q.chips[i].r).map(i=>q.chips[i].w).join(", ")}</span></div>`:""}</div><button class="btn primary" onclick="scNext()">Tiếp</button>`
+ :`<button class="btn primary mt" ${sc.chosen.length===q.wlen?"":"disabled"} onclick="scCheck()">Kiểm tra</button>`}`}
+function vPractice(){const due=dueIds().length;
+ const all=LS.flatMap(o=>lessonVocab(o.n,S.incExp));const cnt=[0,0,0,0,0];all.forEach(v=>cnt[mast(v.id)]++);
+ return `<div class="pagehead"><div style="flex:1"><h1>Luyện tập</h1><div class="sub">Ít bài hơn, chất hơn — mỗi dạng đều ép bạn tự nhớ lại</div></div></div>
+ <button class="modecard" onclick="startSmart(null)" ${due?"":"disabled"}><span class="micon">🧠</span><span style="flex:1"><span class="mtit">스마트 복습 · Ôn SRS</span><br><span class="msub">${due?due+" thẻ · trắc nghiệm→lật→gõ":"Chưa có thẻ đến hạn"}</span></span>${due?`<span class="pill">${due}</span>`:""}</button>
+ <button class="modecard" onclick="startConj(0)"><span class="micon">🔤</span><span style="flex:1"><span class="mtit">활용 훈련 · Chia động từ</span><br><span class="msub">Điểm yếu số 1 — luyện mỗi ngày · bất quy tắc ㅂㄷ르ㅡㄹ · máy ưu tiên mẫu bạn hay sai</span></span></button>
+ <button class="modecard" onclick="startDict()"><span class="micon">⌨️</span><span style="flex:1"><span class="mtit">받아쓰기 · Nghe–chép</span><br><span class="msub">Luyện nghe sâu nhất — phục vụ mục tiêu xem phim, hội thoại</span></span></button>
+ <button class="modecard" onclick="startContrast()"><span class="micon">⚖️</span><span style="flex:1"><span class="mtit">문법 대결 · Đấu ngữ pháp</span><br><span class="msub">2 mẫu dễ nhầm + giải thích VÌ SAO</span></span></button>
+ <button class="modecard" onclick="go('write',0)"><span class="micon">🎯</span><span style="flex:1"><span class="mtit">쓰기 훈련 · Luyện viết</span><br><span class="msub">Từ yếu + ngữ pháp, AI chấm → lưu vào sổ câu sai</span></span></button>
+ <button class="modecard" onclick="startScram(null)"><span class="micon">🧩</span><span style="flex:1"><span class="mtit">문장 만들기 · Ghép câu</span><br><span class="msub">Đã nâng cấp: xáo trộn + 2 mảnh bẫy — phải hiểu nghĩa mới xếp đúng</span></span></button>
+ <button class="modecard" onclick="go('mocklist')"><span class="micon">🎓</span><span style="flex:1"><span class="mtit">TOPIK 모의고사 · Thi thử</span><br><span class="msub">1 đề/tuần · nghe/đọc/viết · ⏱ 20 phút · chấm /100</span></span></button>
+ <button class="modecard" onclick="go('notes')"><span class="micon">📒</span><span style="flex:1"><span class="mtit">오답 노트 · Sổ câu sai</span><br><span class="msub">${(S.notes||[]).length} câu đã lưu · ghép lại câu của chính mình</span></span></button>
+ <div class="sec">Học thẻ mới theo bài</div>
+ <div class="card" style="padding:6px 16px">${LS.map(o=>{const nw=lessonVocab(o.n,S.incExp).filter(v=>!S.cards[v.id]).length;
+ return `<div class="lrow" onclick="startSmart(${o.n})"><div class="lnum">${o.n}과</div><div style="flex:1"><div class="ltit">${o.tp}</div><div class="lsub">${nw?nw+" thẻ mới":"Đã học hết"}</div></div><span style="color:var(--muted)">›</span></div>`}).join("")}</div>
+ <div class="sec">Mức độ thuộc</div>
+ <div class="card">${MLBL.map((m,i)=>`<div class="stat"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:${m[1]}"></span>${m[0]}</span><span class="pill">${cnt[i]}</span></div>`).join("")}</div>
+ <div class="card"><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" ${S.incExp?"checked":""} onchange="toggleExp()" style="width:20px;height:20px;accent-color:var(--accent)"><span><b>Gồm cả từ mở rộng</b></span></label></div>
+ <div class="sec">Dữ liệu</div>
+ <div class="card"><div class="row2"><button class="btn sm" onclick="exportData()">💾 Xuất sao lưu</button><button class="btn sm" onclick="document.getElementById('impf').click()">📥 Nhập</button></div>
+ <input type="file" id="impf" accept=".json" style="display:none" onchange="importData(event)">
+ <button class="btn sm mt" onclick="copyData()">📋 Copy</button>
+ <div class="hint mt">Sao lưu không chứa API key. Nên xuất mỗi tuần.</div>
+ <button class="btn sm mt" onclick="resetAll()" style="color:var(--red)">Xóa toàn bộ (cẩn thận!)</button></div>`}
+/* ===== hết override v6 ===== */
 </script>
 </body>
 </html>
